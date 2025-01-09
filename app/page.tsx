@@ -62,7 +62,10 @@ async function getImage(prompt: string) {
     redirect: "follow",
   };
 
-  return fetch("http://127.0.0.1:7860/sdapi/v1/txt2img", requestOptions)
+  return fetch(
+    "https://toolkit-cordless-unsubscribe-refined.trycloudflare.com/sdapi/v1/txt2img",
+    requestOptions
+  )
     .then((response) => response.json())
     .then((result) => result.images[0])
     .catch((error) => error);
