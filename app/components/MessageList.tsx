@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MessageComponent from "./Message";
 import { Message } from "./types";
@@ -15,12 +15,27 @@ const MessageList: React.FC<MessageListProps> = ({
   isLoading,
 }) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<HTMLDivElement>(null);
+  const [prevMessageCount, setPrevMessageCount] = useState(messages.length);
+  const prevIsLoading = useRef(isLoading); // Keep track of the previous isLoading value
 
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    if (
+      (messages.length !== prevMessageCount ||
+        (isLoading === false && prevIsLoading.current === true)) &&
+      scrollAreaRef.current &&
+      lastMessageRef.current
+    ) {
+      // Scroll the scroll area such that the top of the last message aligns with the top of the scroll area
+      scrollAreaRef.current.children[1].scrollTop =
+        lastMessageRef.current.offsetTop;
     }
-  }, [messages]);
+    setPrevMessageCount(messages.length);
+  }, [messages, isLoading]);
+
+  useEffect(() => {
+    prevIsLoading.current = isLoading; // Update the previous isLoading state
+  }, [isLoading]);
 
   return (
     <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
@@ -33,6 +48,7 @@ const MessageList: React.FC<MessageListProps> = ({
             isLoading={isLoading}
             index={index}
             messages={messages}
+            ref={index === messages.length - 1 ? lastMessageRef : null} // Attach ref to the last message
           />
         ))}
       </div>

@@ -56,7 +56,6 @@ const initialCharacters: Character[] = [
 
 const RPGConversation: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [input, setInput] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [adventureTitle, setAdventureTitle] = useState<string>("");
@@ -135,25 +134,25 @@ ${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
     ) {
       getImageOfEvents(messages.slice(-1)[0].id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, isLoading]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (input: string, newMessages?: Message[]) => {
     if (!input.trim()) return;
 
+    const myMessages = newMessages || messages;
+
     const newPlayerMessage: Message = {
-      id: messages.length + 1,
+      id: myMessages.length + 1,
       text: input,
       sender: "user",
     };
 
     setMessages((prev) => [...prev, newPlayerMessage]);
-    setInput("");
     setIsLoading(true);
     setMessages((prev) => [...prev, { sender: "assistant", text: "", id: -1 }]);
     setIsInputVisible(false);
 
-    const curatedMessages = messages.map((message) => ({
+    const curatedMessages = myMessages.map((message) => ({
       role: message.sender,
       content: message.text,
     }));
@@ -196,20 +195,25 @@ ${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
   };
 
   const handleContinue = () => {
-    console.log("Continue the adventure...");
+    handleSubmit("Continue the story...");
   };
 
   const handleRetry = () => {
-    console.log("Retrying the last action...");
+    const text = messages[messages.length - 2].text;
+    const newMessages = messages.slice(0, messages.length - 2);
+    setMessages(newMessages);
+    handleSubmit(text, newMessages);
   };
 
   const handleUndo = () => {
-    console.log("Undoing the last action...");
     setMessages((prev) => prev.slice(0, -2));
   };
 
   const handleRedrawImage = () => {
-    console.log("Redrawing the last image...");
+    setMessages([
+      ...messages.slice(0, messages.length - 1),
+      { ...messages[messages.length - 1], image: undefined },
+    ]);
     getImageOfEvents(messages.slice(-1)[0].id);
   };
 
@@ -227,10 +231,7 @@ ${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-gray-100 font-serif relative">
-      <div
-        className="fixed top-2 right-2 z-50 flex items-center space-x-2"
-        style={{ opacity: 0.5 }}
-      >
+      <div className="fixed top-2 right-2 z-50 flex items-center space-x-2">
         <Button
           variant="ghost"
           size="icon"
@@ -258,8 +259,6 @@ ${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
         isLoading={isLoading}
       />
       <InputBox
-        input={input}
-        setInput={setInput}
         isInputVisible={isInputVisible}
         toggleInput={toggleInput}
         handleSubmit={handleSubmit}
@@ -267,6 +266,7 @@ ${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
         handleRetry={handleRetry}
         handleUndo={handleUndo}
         handleRedrawImage={handleRedrawImage}
+        messages={messages}
       />
       <SettingsPanel
         isSettingsOpen={isSettingsOpen}

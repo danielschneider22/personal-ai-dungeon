@@ -1,22 +1,21 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RefreshCw, PaintbrushIcon as PaintBrush, Undo, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Message } from "./types";
 
 interface InputBoxProps {
-  input: string;
-  setInput: (input: string) => void;
   isInputVisible: boolean;
   toggleInput: () => void;
-  handleSubmit: () => void;
+  handleSubmit: (input: string) => void;
   handleContinue: () => void;
   handleRetry: () => void;
   handleUndo: () => void;
   handleRedrawImage: () => void;
+  messages: Message[];
 }
 
 const InputBox: React.FC<InputBoxProps> = ({
-  input,
-  setInput,
   isInputVisible,
   toggleInput,
   handleSubmit,
@@ -24,11 +23,20 @@ const InputBox: React.FC<InputBoxProps> = ({
   handleRetry,
   handleUndo,
   handleRedrawImage,
+  messages,
 }) => {
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [input, setInput] = useState("");
+  useEffect(() => {
+    if (isInputVisible) {
+      textAreaRef.current!.focus();
+    }
+  }, [isInputVisible]);
+
   return (
     <div className="bg-gray-800 relative">
       <div className="max-w-2xl mx-auto">
-        <div className="flex p-2">
+        <div className="flex p-2 gap-3">
           <div
             className={`flex-grow transition-all duration-300 ease-in-out bg-gray-900 ${
               isInputVisible
@@ -42,6 +50,7 @@ const InputBox: React.FC<InputBoxProps> = ({
               onChange={(e) => setInput(e.target.value)}
               className="w-full bg-gray-700 text-gray-100 overflow-y-auto"
               style={!isInputVisible ? { display: "none" } : {}}
+              ref={textAreaRef}
             />
           </div>
           <div
@@ -56,7 +65,8 @@ const InputBox: React.FC<InputBoxProps> = ({
               }`}
               onClick={() => {
                 if (isInputVisible) {
-                  handleSubmit();
+                  setInput("");
+                  handleSubmit(input);
                 }
                 toggleInput();
               }}
@@ -107,6 +117,7 @@ const InputBox: React.FC<InputBoxProps> = ({
                   ? "w-0 p-0 m-0 border-transparent overflow-hidden opacity-100"
                   : "flex-grow"
               }`}
+              disabled={!messages.length}
             >
               <PaintBrush className="h-4 w-4" />
             </Button>

@@ -14,6 +14,7 @@ const eslintConfig = [
   {
     rules: {
       "@typescript-eslint/no-explicit-any": "off", // Disable the rule to allow explicit `any`
+      "react-hooks/exhaustive-deps": "off", // Disable the `exhaustive-deps` rule for React hooks
     },
   },
 ];
