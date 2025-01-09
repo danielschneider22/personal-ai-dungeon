@@ -26,7 +26,7 @@ export async function getImage(prompt: string): Promise<string> {
   };
 
   const response = await fetch(
-    "https://toolkit-cordless-unsubscribe-refined.trycloudflare.com/sdapi/v1/txt2img",
+    `${process.env.NEXT_PUBLIC_CLOUDFLARE_URL}/sdapi/v1/txt2img`,
     requestOptions
   );
   const result = await response.json();
