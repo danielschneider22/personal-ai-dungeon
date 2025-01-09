@@ -1,0 +1,230 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.typewriter {
+  overflow: hidden;
+  border-right: 0.15em solid transparent;
+  margin: 0 auto;
+  letter-spacing: 0.05em;
+}
+
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes blink-caret {
+  from,
+  to {
+    border-color: transparent;
+  }
+  50% {
+    border-color: orange;
+  }
+}
+
+textarea {
+  resize: none;
+  overflow: hidden;
+  min-height: 48px;
+  line-height: 24px;
+}
+
+textarea::-webkit-scrollbar {
+  display: none;
+}
+
+/* Loading bubble animation */
+.loading-bubble {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 24px;
+}
+
+.loading-bubble span {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #fff;
+  border-radius: 50%;
+  margin: 0 2px;
+  opacity: 0.3;
+  animation: bubble 1.4s infinite ease-in-out both;
+}
+
+.loading-bubble span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loading-bubble span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bubble {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* Adjust caption styling */
+.text-sm.text-gray-300.italic {
+  font-size: 0.875rem;
+}
+
+/* New animations for input toggle */
+.input-toggle-enter {
+  opacity: 0;
+  max-width: 0;
+}
+
+.input-toggle-enter-active {
+  opacity: 1;
+  max-width: 100%;
+  transition: opacity 300ms, max-width 300ms;
+}
+
+.input-toggle-exit {
+  opacity: 1;
+  max-width: 100%;
+}
+
+.input-toggle-exit-active {
+  opacity: 0;
+  max-width: 0;
+  transition: opacity 300ms, max-width 300ms;
+}
+
+/* Adjust button animations */
+.button-shrink {
+  width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-color: transparent !important;
+  overflow: hidden !important;
+  transition: all 300ms !important;
+}
+
+.button-grow {
+  flex-grow: 1 !important;
+  padding: 0.5rem 1rem !important;
+  transition: all 300ms !important;
+}
+
+/* Settings panel styles */
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.settings-content {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+/* Transparent background for tabs */
+.react-tabs__tab-list {
+  background-color: transparent !important;
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 0.5rem;
+}
+
+.react-tabs__tab {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.3s ease;
+}
+
+.react-tabs__tab--selected {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Adjust hover effect for icon buttons */
+.icon-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
