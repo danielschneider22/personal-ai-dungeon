@@ -11,7 +11,6 @@ import {
   RefreshCw,
   PaintbrushIcon as PaintBrush,
   Settings,
-  ChevronDown,
   Undo,
   X,
   Eye,
@@ -126,33 +125,23 @@ export default function RPGConversation() {
   const [aiInstructions, setAiInstructions] = useState("");
   const [storySummary, setStorySummary] = useState("");
   const [plotEssentials, setPlotEssentials] = useState("");
-  const [adventures, setAdventures] = useState([
+  const [adventures] = useState([
     "Current Adventure",
     "New Adventure 1",
     "New Adventure 2",
   ]);
   const [selectedAdventure, setSelectedAdventure] =
     useState("Current Adventure");
-  const [characters, setCharacters] = useState<Character[]>(initialCharacters);
+  const [characters] = useState<Character[]>(initialCharacters);
   const [isInputVisible, setIsInputVisible] = useState(false);
   const [showImages, setShowImages] = useState(true);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [userMsgCnt, setUserMsgCnt] = useState(0);
-  useEffect(() => {
-    if (
-      messages.length &&
-      messages.slice(-1)[0].sender === "assistant" &&
-      !messages.slice(-1)[0].image &&
-      !isLoading
-    ) {
-      getImageOfEvents(messages.slice(-1)[0].id);
-    }
-  }, [messages, isLoading]);
 
   const getImageOfEvents = async (id: string | number) => {
     const curatedMessages: any = [];
-    messages.forEach((message, i) => {
+    messages.forEach((message) => {
       curatedMessages.push({ role: message.sender, content: message.text });
     });
     const json: any = {
@@ -199,6 +188,18 @@ export default function RPGConversation() {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    if (
+      messages.length &&
+      messages.slice(-1)[0].sender === "assistant" &&
+      !messages.slice(-1)[0].image &&
+      !isLoading
+    ) {
+      getImageOfEvents(messages.slice(-1)[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, isLoading]);
 
   useEffect(() => {
     const handleScroll = () => {
