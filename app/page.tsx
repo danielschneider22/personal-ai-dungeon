@@ -214,7 +214,6 @@ ${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
       ...messages.slice(0, messages.length - 1),
       { ...messages[messages.length - 1], image: undefined },
     ]);
-    getImageOfEvents(messages.slice(-1)[0].id);
   };
 
   const toggleSettings = () => {
