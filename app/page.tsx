@@ -1,74 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Image from "next/image";
-import {
-  RefreshCw,
-  PaintbrushIcon as PaintBrush,
-  Settings,
-  Undo,
-  X,
-  Eye,
-  EyeOff,
-} from "lucide-react";
-
-interface Message {
-  id: string | number;
-  text: string;
-  sender: "user" | "assistant";
-  image?: string;
-  caption?: string;
-}
-
-interface Character {
-  id: number;
-  name: string;
-  image: string;
-  description: string;
-  meter: number;
-  traits: string[];
-}
-
-async function getImage(prompt: string) {
-  const myHeaders = new Headers();
-  myHeaders.append("Content-Type", "application/json");
-
-  const raw = JSON.stringify({
-    prompt: prompt,
-    negative_prompt:
-      "score_6, score_5, score_4, pony, gaping, censored, furry, child, kid, chibi, 3d, photo, monochrome, elven ears, anime, multiple cocks, extra legs, extra hands, mutated legs, mutated hands, big man, high man, muscular man, muscular hands",
-    width: 832,
-    height: 1216,
-    samples: 1,
-    steps: 30,
-    cfg_scale: 7,
-    sampler: "Euler a",
-    schedule_type: "Automatic",
-    model_hash: "059934ff58",
-    model: "ponyRealism_V21MainVAE.safetensors [059934ff58]",
-    clip_skip: 2,
-  });
-
-  const requestOptions: any = {
-    method: "POST",
-    headers: myHeaders,
-    body: raw,
-    redirect: "follow",
-  };
-
-  return fetch(
-    "https://toolkit-cordless-unsubscribe-refined.trycloudflare.com/sdapi/v1/txt2img",
-    requestOptions
-  )
-    .then((response) => response.json())
-    .then((result) => result.images[0])
-    .catch((error) => error);
-}
+import { Eye, EyeOff, Settings } from "lucide-react";
+import InputBox from "./components/InputBox";
+import MessageList from "./components/MessageList";
+import SettingsPanel from "./components/SettingsPanel";
+import { Character, Message } from "./components/types";
+import { getImage } from "./utils/api";
 
 const initialMessages: Message[] = [];
 
@@ -115,52 +54,48 @@ const initialCharacters: Character[] = [
   },
 ];
 
-export default function RPGConversation() {
+const RPGConversation: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [scrollPosition, setScrollPosition] = useState(0);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [adventureTitle, setAdventureTitle] = useState("");
-  const [aiInstructions, setAiInstructions] = useState("");
-  const [storySummary, setStorySummary] = useState("");
-  const [plotEssentials, setPlotEssentials] = useState("");
-  const [adventures] = useState([
+  const [input, setInput] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [adventureTitle, setAdventureTitle] = useState<string>("");
+  const [aiInstructions, setAiInstructions] = useState<string>("");
+  const [storySummary, setStorySummary] = useState<string>("");
+  const [plotEssentials, setPlotEssentials] = useState<string>("");
+  const [adventures] = useState<string[]>([
     "Current Adventure",
     "New Adventure 1",
     "New Adventure 2",
   ]);
   const [selectedAdventure, setSelectedAdventure] =
-    useState("Current Adventure");
+    useState<string>("Current Adventure");
   const [characters] = useState<Character[]>(initialCharacters);
-  const [isInputVisible, setIsInputVisible] = useState(false);
-  const [showImages, setShowImages] = useState(true);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [userMsgCnt, setUserMsgCnt] = useState(0);
+  const [isInputVisible, setIsInputVisible] = useState<boolean>(false);
+  const [showImages, setShowImages] = useState<boolean>(true);
+  const [userMsgCnt, setUserMsgCnt] = useState<number>(0);
 
   const getImageOfEvents = async (id: string | number) => {
-    const curatedMessages: any = [];
-    messages.forEach((message) => {
-      curatedMessages.push({ role: message.sender, content: message.text });
-    });
-    const json: any = {
+    const curatedMessages = messages.map((message) => ({
+      role: message.sender,
+      content: message.text,
+    }));
+    const json = {
       model: "mistral-large-latest",
       messages: [
         {
           role: "system",
           content: process.env.NEXT_PUBLIC_IMAGE_SYSTEM_TEXT,
         },
-
         ...curatedMessages,
         {
           role: "user",
           content: `For this response, return a list of strings used to create a stable diffusion prompt of the current person in the scene and their action. The will be used to generate an image for the narrative
-            
-            return the comma separated string followed by exactly three pipes ||| then give a descriptor of the name of who is in the scene and what they are doing
-            example:
-            ${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
-            `,
+
+return the comma separated string followed by exactly three pipes ||| then give a descriptor of the name of who is in the scene and what they are doing
+example:
+${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
+`,
         },
       ],
     };
@@ -179,8 +114,10 @@ export default function RPGConversation() {
       const imgStr = await getImage(aiReply.split("|||")[0]);
       setMessages((prev) => {
         const msgToAddImg = prev.find((message) => message.id === id);
-        msgToAddImg!.image = imgStr;
-        msgToAddImg!.caption = aiReply.split("|||")[1];
+        if (msgToAddImg) {
+          msgToAddImg.image = imgStr;
+          msgToAddImg.caption = aiReply.split("|||")[1];
+        }
         return [...prev];
       });
       console.log(aiReply);
@@ -201,41 +138,6 @@ export default function RPGConversation() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, isLoading]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (scrollAreaRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
-        setScrollPosition(scrollTop / (scrollHeight - clientHeight));
-      }
-    };
-
-    const scrollArea = scrollAreaRef.current;
-    if (scrollArea) {
-      scrollArea.addEventListener("scroll", handleScroll);
-    }
-
-    return () => {
-      if (scrollArea) {
-        scrollArea.removeEventListener("scroll", handleScroll);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  useEffect(() => {
-    if (textareaRef.current && isInputVisible) {
-      textareaRef.current.style.height = `${Math.min(
-        textareaRef.current.scrollHeight,
-        5 * 24
-      )}px`;
-    }
-  }, [input, isInputVisible]);
-
   const handleSubmit = async () => {
     if (!input.trim()) return;
 
@@ -251,17 +153,16 @@ export default function RPGConversation() {
     setMessages((prev) => [...prev, { sender: "assistant", text: "", id: -1 }]);
     setIsInputVisible(false);
 
-    const curatedMessages: any = [];
-    messages.forEach((message) => {
-      curatedMessages.push({ role: message.sender, content: message.text });
-    });
-    const json: any = {
+    const curatedMessages = messages.map((message) => ({
+      role: message.sender,
+      content: message.text,
+    }));
+    const json = {
       model: "mistral-large-latest",
       messages: [
         {
           role: "system",
-          content:
-            'You\'re a storyteller and game-master that provides any sort of game, roleplaying and story content. This game is meant to be erotic and simulates a dnd like game. Your first priority is to provide erotic situations to the player tailored to their events, interactions, and desires. Keep track of stats and leveling up. The expectation is the prompts are attempting to create erotic scenarios. Write in second person present tense ("You are"), unless otherwise indicated. Continue the story where it leaves off without repetition. Continue any unfinished sentences. Write plainly and simply. Use everyday words with their literal meanings. Be specific and concrete. Use colloquial dialog. Keep the story moving. > means an attempted action. Create realistic outcomes and consequences.',
+          content: process.env.NEXT_PUBLIC_STORY_PROMPT,
         },
         ...curatedMessages,
         {
@@ -295,23 +196,19 @@ export default function RPGConversation() {
   };
 
   const handleContinue = () => {
-    // Implement continue logic
     console.log("Continue the adventure...");
   };
 
   const handleRetry = () => {
-    // Implement retry logic
     console.log("Retrying the last action...");
   };
 
   const handleUndo = () => {
-    // Implement undo logic
     console.log("Undoing the last action...");
     setMessages((prev) => prev.slice(0, -2));
   };
 
   const handleRedrawImage = () => {
-    // Implement redraw image logic
     console.log("Redrawing the last image...");
     getImageOfEvents(messages.slice(-1)[0].id);
   };
@@ -355,257 +252,40 @@ export default function RPGConversation() {
           <Settings className="h-6 w-6" />
         </Button>
       </div>
-      <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
-        <div className="max-w-2xl mx-auto space-y-4">
-          {messages.map((message, index) => (
-            <div
-              key={message.id}
-              className={`flex ${
-                message.sender === "user" ? "justify-start" : "justify-end"
-              }`}
-              style={{
-                opacity: Math.max(
-                  0.3,
-                  1 -
-                    (scrollPosition * (messages.length - index)) /
-                      messages.length
-                ),
-              }}
-            >
-              <div
-                className={`max-w-[90%] p-3 rounded-lg ${
-                  message.sender === "user" ? "bg-blue-600" : "bg-gray-800"
-                }`}
-              >
-                {message.sender === "assistant" &&
-                isLoading &&
-                index === messages.length - 1 ? (
-                  <div className="loading-bubble">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                ) : (
-                  <p className="typewriter" style={{ whiteSpace: "pre-line" }}>
-                    {message.text}
-                  </p>
-                )}
-                {message.image && showImages && (
-                  <div className="mt-2">
-                    <Image
-                      src={`data:image/png;base64,${message.image}`}
-                      alt={message.caption || "AI-generated image"}
-                      width={400}
-                      height={300}
-                      className="rounded-lg"
-                    />
-                    {message.caption && (
-                      <p className="mt-1 text-sm text-gray-300 italic">
-                        {message.caption}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </ScrollArea>
-      <div className="bg-gray-800 relative">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex">
-            <div
-              className={`flex-grow transition-all duration-300 ease-in-out bg-gray-900 ${
-                isInputVisible
-                  ? "opacity-100 max-w-full"
-                  : "opacity-0 max-w-0 overflow-hidden"
-              }`}
-            >
-              <Textarea
-                ref={textareaRef}
-                placeholder="What will you do next?"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                className="w-full bg-gray-700 text-gray-100 overflow-y-auto"
-                style={!isInputVisible ? { display: "none" } : {}}
-              />
-            </div>
-            <div
-              className={`flex bg-gray-900 transition-all duration-300 ease-in-out ${
-                isInputVisible ? "flex-shrink-0" : "flex-grow w-full"
-              }`}
-            >
-              <Button
-                type="submit"
-                className={`transition-all duration-300 ease-in-out ${
-                  isInputVisible ? "flex-shrink-0" : "flex-grow"
-                }`}
-                onClick={() => {
-                  if (isInputVisible) {
-                    handleSubmit();
-                  }
-                  toggleInput();
-                }}
-              >
-                Take a turn
-              </Button>
-              <Button
-                onClick={handleContinue}
-                variant="outline"
-                className={`bg-gray-700 text-gray-100 hover:bg-gray-600 transition-all duration-300 ease-in-out ${
-                  isInputVisible
-                    ? "w-0 p-0 m-0 border-transparent overflow-hidden"
-                    : "flex-grow"
-                }`}
-              >
-                Continue
-              </Button>
-              <Button
-                onClick={handleRetry}
-                variant="ghost"
-                size="icon"
-                className={`transition-all duration-300 ease-in-out ${
-                  isInputVisible
-                    ? "w-0 p-0 m-0 border-transparent overflow-hidden"
-                    : "flex-grow"
-                }`}
-              >
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={handleUndo}
-                variant="ghost"
-                size="icon"
-                className={`transition-all duration-300 ease-in-out ${
-                  isInputVisible
-                    ? "w-0 p-0 m-0 border-transparent overflow-hidden"
-                    : "flex-grow"
-                }`}
-              >
-                <Undo className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={handleRedrawImage}
-                variant="ghost"
-                size="icon"
-                className={`transition-all duration-300 ease-in-out ${
-                  isInputVisible
-                    ? "w-0 p-0 m-0 border-transparent overflow-hidden"
-                    : "flex-grow"
-                }`}
-              >
-                <PaintBrush className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-        {isInputVisible && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleInput}
-            className="absolute -top-3 right-2 rounded-full p-1 hover:bg-gray-700"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-      <div
-        className={`fixed inset-0 bg-gray-900/95 transition-transform duration-300 ease-in-out ${
-          isSettingsOpen ? "translate-y-0" : "translate-y-full"
-        }`}
-      >
-        <div className="container mx-auto p-4 h-full flex flex-col">
-          <Tabs defaultValue="general" className="flex-grow flex flex-col">
-            <div className="flex justify-center w-full mb-4">
-              <TabsList className="bg-transparent">
-                <TabsTrigger value="general">General</TabsTrigger>
-                <TabsTrigger value="characters">Characters</TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent
-              value="general"
-              className="flex-grow flex flex-col overflow-auto"
-            >
-              <Input
-                type="text"
-                placeholder="Adventure Title"
-                value={adventureTitle}
-                onChange={(e) => setAdventureTitle(e.target.value)}
-                className="mb-4"
-              />
-              <Textarea
-                placeholder="AI Instructions"
-                value={aiInstructions}
-                onChange={(e) => setAiInstructions(e.target.value)}
-                className="mb-4 flex-grow"
-              />
-              <Textarea
-                placeholder="Story Summary"
-                value={storySummary}
-                onChange={(e) => setStorySummary(e.target.value)}
-                className="mb-4 flex-grow"
-              />
-              <Textarea
-                placeholder="Plot Essentials"
-                value={plotEssentials}
-                onChange={(e) => setPlotEssentials(e.target.value)}
-                className="mb-4 flex-grow"
-              />
-              <select
-                value={selectedAdventure}
-                onChange={(e) => setSelectedAdventure(e.target.value)}
-                className="mb-4 bg-gray-700 text-gray-100 rounded-md p-2"
-              >
-                {adventures.map((adventure) => (
-                  <option key={adventure} value={adventure}>
-                    {adventure}
-                  </option>
-                ))}
-              </select>
-            </TabsContent>
-            <TabsContent value="characters" className="flex-grow overflow-auto">
-              <ScrollArea className="h-full">
-                {characters.map((character) => (
-                  <div
-                    key={character.id}
-                    className="mb-6 p-4 bg-gray-800 rounded-lg"
-                  >
-                    <div className="flex items-center mb-4">
-                      <Image
-                        src={character.image}
-                        alt={character.name}
-                        width={50}
-                        height={50}
-                        className="rounded-full mr-4"
-                      />
-                      <h3 className="text-xl font-bold">{character.name}</h3>
-                    </div>
-                    <p className="mb-2">{character.description}</p>
-                    <div className="mb-2">
-                      <div className="bg-gray-700 h-2 rounded-full">
-                        <div
-                          className="bg-blue-500 h-2 rounded-full"
-                          style={{ width: `${character.meter}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm">{character.meter}/100</span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-1">Traits:</h4>
-                      <ul className="list-disc list-inside">
-                        {character.traits.map((trait, index) => (
-                          <li key={index}>{trait}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                ))}
-              </ScrollArea>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+      <MessageList
+        messages={messages}
+        showImages={showImages}
+        isLoading={isLoading}
+      />
+      <InputBox
+        input={input}
+        setInput={setInput}
+        isInputVisible={isInputVisible}
+        toggleInput={toggleInput}
+        handleSubmit={handleSubmit}
+        handleContinue={handleContinue}
+        handleRetry={handleRetry}
+        handleUndo={handleUndo}
+        handleRedrawImage={handleRedrawImage}
+      />
+      <SettingsPanel
+        isSettingsOpen={isSettingsOpen}
+        toggleSettings={toggleSettings}
+        adventureTitle={adventureTitle}
+        setAdventureTitle={setAdventureTitle}
+        aiInstructions={aiInstructions}
+        setAiInstructions={setAiInstructions}
+        storySummary={storySummary}
+        setStorySummary={setStorySummary}
+        plotEssentials={plotEssentials}
+        setPlotEssentials={setPlotEssentials}
+        adventures={adventures}
+        selectedAdventure={selectedAdventure}
+        setSelectedAdventure={setSelectedAdventure}
+        characters={characters}
+      />
     </div>
   );
-}
+};
+
+export default RPGConversation;
