@@ -4,6 +4,7 @@ export interface Message {
   sender: "user" | "assistant";
   image?: string;
   caption?: string;
+  summarized?: boolean;
 }
 
 export interface Character {
@@ -11,6 +12,12 @@ export interface Character {
   name: string;
   image: string;
   description: string;
-  meter: number;
+  meter?: number;
   traits: string[];
+  goals: string[];
+  misc: string;
+  imageDesc?: string;
+  mainCharacter?: boolean;
+  appearance?: string[];
+  meterDesc?: string;
 }

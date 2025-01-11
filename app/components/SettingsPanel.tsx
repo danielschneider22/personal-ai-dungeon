@@ -1,9 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Character } from "./types";
-import CharacterCard from "./CharacterCard";
+import CharacterSettings from "./CharacterSettings";
+import { Character, Message } from "./types";
 
 interface SettingsPanelProps {
   isSettingsOpen: boolean;
@@ -12,14 +11,16 @@ interface SettingsPanelProps {
   setAdventureTitle: (title: string) => void;
   aiInstructions: string;
   setAiInstructions: (instructions: string) => void;
-  storySummary: string;
-  setStorySummary: (summary: string) => void;
+  summary: string;
+  setSummary: (summary: string) => void;
   plotEssentials: string;
   setPlotEssentials: (essentials: string) => void;
   adventures: string[];
   selectedAdventure: string;
   setSelectedAdventure: (adventure: string) => void;
+  messages: Message[];
   characters: Character[];
+  setCharacters: any;
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -28,23 +29,25 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   setAdventureTitle,
   aiInstructions,
   setAiInstructions,
-  storySummary,
-  setStorySummary,
+  summary,
+  setSummary,
   plotEssentials,
   setPlotEssentials,
   adventures,
   selectedAdventure,
   setSelectedAdventure,
+  messages,
   characters,
+  setCharacters,
 }) => {
   return (
     <div
-      className={`fixed inset-0 bg-gray-900/95 transition-transform duration-300 ease-in-out ${
+      className={`fixed inset-0 bg-gray-900/95 transition-transform duration-300 ease-in-out h-screen ${
         isSettingsOpen ? "translate-y-0" : "translate-y-full"
       }`}
     >
       <div className="container mx-auto p-4 h-full flex flex-col">
-        <Tabs defaultValue="general" className="flex-grow flex flex-col">
+        <Tabs defaultValue="general" className="flex-grow flex flex-col h-full">
           <div className="flex justify-center w-full mb-4">
             <TabsList className="bg-transparent">
               <TabsTrigger value="general">General</TabsTrigger>
@@ -60,25 +63,25 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               placeholder="Adventure Title"
               value={adventureTitle}
               onChange={(e) => setAdventureTitle(e.target.value)}
-              className="mb-4"
+              className="mb-4 overflow-scroll resize-none"
             />
             <Textarea
               placeholder="AI Instructions"
               value={aiInstructions}
               onChange={(e) => setAiInstructions(e.target.value)}
-              className="mb-4 flex-grow"
+              className="mb-4 flex-grow overflow-scroll resize-none"
             />
             <Textarea
               placeholder="Story Summary"
-              value={storySummary}
-              onChange={(e) => setStorySummary(e.target.value)}
-              className="mb-4 flex-grow"
+              value={summary}
+              onChange={(e) => setSummary(e.target.value)}
+              className="mb-4 flex-grow overflow-scroll resize-none"
             />
             <Textarea
               placeholder="Plot Essentials"
               value={plotEssentials}
               onChange={(e) => setPlotEssentials(e.target.value)}
-              className="mb-4 flex-grow"
+              className="mb-4 flex-grow overflow-scroll resize-none"
             />
             <select
               value={selectedAdventure}
@@ -93,11 +96,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </select>
           </TabsContent>
           <TabsContent value="characters" className="flex-grow overflow-auto">
-            <ScrollArea className="h-full">
-              {characters.map((character) => (
-                <CharacterCard key={character.id} character={character} />
-              ))}
-            </ScrollArea>
+            <CharacterSettings
+              characters={characters}
+              setCharacters={setCharacters}
+              messages={messages}
+              summary={summary}
+            />
           </TabsContent>
         </Tabs>
       </div>

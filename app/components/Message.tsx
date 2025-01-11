@@ -2,6 +2,18 @@ import Image from "next/image";
 import { Message } from "./types";
 import { Ref } from "react";
 
+export function addPink(text: string) {
+  return text.split("***LEWD***").map((part, index) => {
+    if (index % 2 !== 0) {
+      return (
+        <span key={index} style={{ color: "pink" }}>
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
+}
 interface MessageProps {
   message: Message;
   showImages: boolean;
@@ -19,6 +31,8 @@ const MessageComponent: React.FC<MessageProps> = ({
   messages,
   ref,
 }) => {
+  const formattedText = addPink(message.text);
+
   return (
     <div
       key={message.id}
@@ -42,7 +56,7 @@ const MessageComponent: React.FC<MessageProps> = ({
           </div>
         ) : (
           <p className="typewriter" style={{ whiteSpace: "pre-line" }}>
-            {message.text}
+            {formattedText}
           </p>
         )}
         {message.image && showImages && (

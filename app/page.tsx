@@ -7,60 +7,15 @@ import InputBox from "./components/InputBox";
 import MessageList from "./components/MessageList";
 import SettingsPanel from "./components/SettingsPanel";
 import { Character, Message } from "./components/types";
-import { getImage } from "./utils/api";
-
-const initialMessages: Message[] = [];
-
-const initialCharacters: Character[] = [
-  {
-    id: 1,
-    name: "Elara the Elven Archer",
-    image: "/placeholder.svg?height=100&width=100",
-    description: "A skilled archer with a mysterious past.",
-    meter: 75,
-    traits: ["Agile", "Sharp-eyed", "Secretive"],
-  },
-  {
-    id: 2,
-    name: "Grimlock the Dwarven Warrior",
-    image: "/placeholder.svg?height=100&width=100",
-    description: "A stout-hearted warrior with an unbreakable will.",
-    meter: 90,
-    traits: ["Strong", "Loyal", "Stubborn"],
-  },
-  {
-    id: 3,
-    name: "Zephyr the Wind Mage",
-    image: "/placeholder.svg?height=100&width=100",
-    description: "A capricious spellcaster with the power of the winds.",
-    meter: 60,
-    traits: ["Intelligent", "Unpredictable", "Free-spirited"],
-  },
-  {
-    id: 4,
-    name: "Thorne the Rogue",
-    image: "/placeholder.svg?height=100&width=100",
-    description: "A cunning thief with a heart of gold.",
-    meter: 40,
-    traits: ["Stealthy", "Charming", "Greedy"],
-  },
-  {
-    id: 5,
-    name: "Luna the Druid",
-    image: "/placeholder.svg?height=100&width=100",
-    description: "A wise shapeshifter in tune with nature.",
-    meter: 85,
-    traits: ["Wise", "Calm", "Protective"],
-  },
-];
+import { getImage, getImageOfEvents } from "./utils/api";
 
 const RPGConversation: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [adventureTitle, setAdventureTitle] = useState<string>("");
   const [aiInstructions, setAiInstructions] = useState<string>("");
-  const [storySummary, setStorySummary] = useState<string>("");
   const [plotEssentials, setPlotEssentials] = useState<string>("");
   const [adventures] = useState<string[]>([
     "Current Adventure",
@@ -69,61 +24,9 @@ const RPGConversation: React.FC = () => {
   ]);
   const [selectedAdventure, setSelectedAdventure] =
     useState<string>("Current Adventure");
-  const [characters] = useState<Character[]>(initialCharacters);
   const [isInputVisible, setIsInputVisible] = useState<boolean>(false);
   const [showImages, setShowImages] = useState<boolean>(true);
-  const [userMsgCnt, setUserMsgCnt] = useState<number>(0);
-
-  const getImageOfEvents = async (id: string | number) => {
-    const curatedMessages = messages.map((message) => ({
-      role: message.sender,
-      content: message.text,
-    }));
-    const json = {
-      model: "mistral-large-latest",
-      messages: [
-        {
-          role: "system",
-          content: process.env.NEXT_PUBLIC_IMAGE_SYSTEM_TEXT,
-        },
-        ...curatedMessages,
-        {
-          role: "user",
-          content: `For this response, return a list of strings used to create a stable diffusion prompt of the current person in the scene and their action. The will be used to generate an image for the narrative
-
-return the comma separated string followed by exactly three pipes ||| then give a descriptor of the name of who is in the scene and what they are doing
-example:
-${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
-`,
-        },
-      ],
-    };
-    try {
-      const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_MISTRAL_API_TOKEN}`,
-        },
-        body: JSON.stringify(json),
-      });
-      const data = await res.json();
-      const aiReply = data.choices[0].message.content;
-
-      const imgStr = await getImage(aiReply.split("|||")[0]);
-      setMessages((prev) => {
-        const msgToAddImg = prev.find((message) => message.id === id);
-        if (msgToAddImg) {
-          msgToAddImg.image = imgStr;
-          msgToAddImg.caption = aiReply.split("|||")[1];
-        }
-        return [...prev];
-      });
-      console.log(aiReply);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const [summary, setSummary] = useState("");
 
   useEffect(() => {
     if (
@@ -132,9 +35,34 @@ ${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
       !messages.slice(-1)[0].image &&
       !isLoading
     ) {
-      getImageOfEvents(messages.slice(-1)[0].id);
+      async function makeImage() {
+        const id = messages.slice(-1)[0].id;
+        const aiReply = await getImageOfEvents(id, messages, characters);
+        const imgStr = await getImage(aiReply.split("|||")[0]);
+        setMessages((prev) => {
+          const msgToAddImg = prev.find((message) => message.id === id);
+          if (msgToAddImg) {
+            msgToAddImg.image = imgStr;
+            msgToAddImg.caption = aiReply.split("|||")[1];
+          }
+          return [...prev];
+        });
+      }
+
+      makeImage();
     }
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    if (
+      messages.filter(
+        (message) => message.sender === "user" && !message.summarized
+      ).length >= 5 &&
+      !isLoading
+    ) {
+      handleSummarize();
+    }
+  }, [messages]);
 
   const handleSubmit = async (input: string, newMessages?: Message[]) => {
     if (!input.trim()) return;
@@ -152,10 +80,13 @@ ${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
     setMessages((prev) => [...prev, { sender: "assistant", text: "", id: -1 }]);
     setIsInputVisible(false);
 
-    const curatedMessages = myMessages.map((message) => ({
-      role: message.sender,
-      content: message.text,
-    }));
+    const curatedMessages = myMessages
+      .filter((message) => !message.summarized)
+      .map((message) => ({
+        role: message.sender,
+        content: message.text,
+      }));
+
     const json = {
       model: "mistral-large-latest",
       messages: [
@@ -163,6 +94,33 @@ ${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
           role: "system",
           content: process.env.NEXT_PUBLIC_STORY_PROMPT,
         },
+        ...(summary
+          ? [
+              {
+                role: "system",
+                content:
+                  "Summary of the events that have happened so far: " + summary,
+              },
+            ]
+          : []),
+        ...(characters
+          ? [
+              {
+                role: "system",
+                content:
+                  "JSON object representing characters in the story" +
+                  JSON.stringify(
+                    characters.map((character) => {
+                      return {
+                        name: character.name,
+                        appearance: character.appearance,
+                        sLevel: character.meterDesc,
+                      };
+                    })
+                  ),
+              },
+            ]
+          : []),
         ...curatedMessages,
         {
           role: "user",
@@ -186,13 +144,71 @@ ${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
         ...prev.slice(0, -1),
         { sender: "assistant", text: aiReply, id: data.id },
       ]);
-      setUserMsgCnt(userMsgCnt + 1);
     } catch (error) {
       console.log(error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  async function handleSummarize() {
+    const nonSummarizedMessages = messages
+      .filter((message) => !message.summarized)
+      .map((message) => ({
+        role: message.sender,
+        content: message.text,
+      }));
+    const json = {
+      model: "mistral-large-latest",
+      messages: [
+        {
+          role: "system",
+          content: process.env.NEXT_PUBLIC_STORY_PROMPT,
+        },
+        ...(summary
+          ? [
+              {
+                role: "system",
+                content:
+                  "Summary of the events that have happened so far: " + summary,
+              },
+            ]
+          : []),
+        ...nonSummarizedMessages,
+        {
+          role: "user",
+          content:
+            "The previous message interactions between the assistant the user need to be added to the summary. Change the current summary to include the last series of events. These messages will no longer be included to you, we will just be passing the summary. Be sure to note important all important details. Start with **SUMMARY:** and then **CURRENT SCENE**. Keep track of any statistic changes for characters.",
+        },
+      ],
+    };
+    try {
+      const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_MISTRAL_API_TOKEN}`,
+        },
+        body: JSON.stringify(json),
+      });
+      const data = await res.json();
+      const aiReply = data.choices[0].message.content;
+
+      setMessages((prev) => {
+        return prev.map((message) => {
+          return {
+            ...message,
+            summarized: true,
+          };
+        });
+      });
+      setSummary(aiReply);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   const handleContinue = () => {
     handleSubmit("Continue the story...");
@@ -274,14 +290,16 @@ ${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
         setAdventureTitle={setAdventureTitle}
         aiInstructions={aiInstructions}
         setAiInstructions={setAiInstructions}
-        storySummary={storySummary}
-        setStorySummary={setStorySummary}
+        summary={summary}
+        setSummary={setSummary}
         plotEssentials={plotEssentials}
         setPlotEssentials={setPlotEssentials}
         adventures={adventures}
         selectedAdventure={selectedAdventure}
         setSelectedAdventure={setSelectedAdventure}
+        messages={messages}
         characters={characters}
+        setCharacters={setCharacters}
       />
     </div>
   );
