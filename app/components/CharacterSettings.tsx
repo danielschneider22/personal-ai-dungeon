@@ -2,7 +2,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Character, Message } from "./types";
 import CharacterCard from "./CharacterCard";
 import { Button } from "@/components/ui/button";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { getImage } from "../utils/api";
 
 //           \n\n1. **0-10: Sexually Reserved**\n   - **Wear:** Prefer modest clothing, often covering most of their skin.\n   - **Activities:** Actively avoid sexual interaction and frown upon those activities\n   - **Description:** They may have strong personal or cultural beliefs about sexual activity, or perhaps just aren't interested in it. They are prudes\n\n2. **10-20: Sexually Cautious**\n   - **Wear:** Still modest, but may show a bit more skin, e.g., short sleeves, knees-length skirts.\n   - **Activities:** Open to dating, but take things slow. May enjoy kissing and very light petting.\n   - **Description:** They are selective about their partners and don't really engage actively in sex.\n\n3. **20-30: Sexually Curious**\n   - **Wear:** May start to experiment with more form-fitting clothing, but still relatively modest.\n   - **Activities:** Heavy petting, making out. Open to discussing and exploring sexual topics.\n   - **Description:** They are becoming more comfortable with their sexuality and are interested in learning more.\n\n4. **30-40: Sexually Active**\n   - **Wear:** More revealing clothing, e.g., v-necks, mini skirts, but still tasteful.\n   - **Activities:** In addition to kissing they like their breasts being played with.\n   - **Description:** They are more comfortable with their sexuality and are open to vanilla experiences.\n\n5. **40-50: Sexually Adventurous**\n   - **Wear:** Lingerie, sexy outfits, but keeps it classy in public.\n   - **Activities:** Open to light kinks, role-playing, and different positions.\n   - **Description:** They enjoy exploring different aspects of sexuality and are open to new experiences.\n\n6. **50-60: Sexually Liberated**\n   - **Wear:** Comfortable in lingerie, may wear more revealing clothing in public.\n   - **Activities:** Open to more kinks, sex parties, and public displays of affection. They might want to do group masturbation or other riskier kinks\n   - **Description:** They are very comfortable with their sexuality and enjoy exploring it in various ways.\n\n7. **60-70: Sexually Uninhibited**\n   - **Wear:** Frequently in lingerie or other sexy outfits, may wear provocative clothing in public.\n   - **Activities:** Open to most kinks, group sex, and swinging.\n   - **Description:** They have very few sexual inhibitions and enjoy exploring their fantasies. More open to being called slut or bimbo\n\n8. **70-80: Sexually Insatiable**\n   - **Wear:** Often in lingerie or other sexy outfits, may wear very provocative clothing in public.\n   - **Activities:** Actively seeks out new partners, kinks, and experiences. May engage in exhibitionism.\n   - **Description:** They have a very high sex drive and are constantly looking for new experiences. They start like being called slut and bimbo and ask you to call them that. Their lust clouds their mind during the day and they are constantly horny.\n\n9. **80-90: Sexually Obsessed**\n   - **Wear:** Often in very revealing or fetish-specific outfits, may have difficulty \"covering up\" in public.\n   - **Activities:** Actively engages in many kinks, may have difficulty forming emotional connections.\n   - **Description:** Their life is heavily focused on sexual activities and thoughts.\n\n10. **90-100: Sexually Deprived (in the sense of the original request)**\n    - **Wear:** May refuse to wear clothes, or only wear very revealing/fetish outfits.\n    - **Activities:** Actively engages in many kinks, may have difficulty functioning in day-to-day life due to sexual obsessions.\n    - **Description:** Their life and thoughts are dominated by sex. They may struggle with daily activities due to their constant preoccupation."
@@ -132,32 +132,6 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 imageDesc: "male, teacher, brown hair, athletic",
                 mainCharacter: true,
                 goals: ["School slut transformation: Turn every girl at the school into your personal bimbo", "Improved Athletics: Gain 20 lbs of muscle"],
-                misc: "Current spells acquired: 
-                1. **Lustful Gaze**
-- *Mana Cost*: 10
-- *Duration*: 5 minutes
-- *Effect*: Makes the target see you as highly attractive and desirable.
-- *Cooldown*: 10 minutes
-
-2. **Arousing Touch**
-- *Mana Cost*: 15
-- *Duration*: 1 minute
-- *Effect*: Your touch stimulates the target's senses, making them highly aroused.
-- *Cooldown*: 15 minutes
-
-3. **Whispers of Desire**
-- *Mana Cost*: 20
-- *Duration*: 3 minutes
-- *Effect*: Your words incite lustful thoughts in the target, making them want you.
-- *Cooldown*: 20 minutes
-
-4. **Minor Transformation**
-- *Mana Cost*: 30
-- *Duration*: 1 hour
-- *Effect*: Alters a small aspect of the target's personality or appearance, twisting it towards your desires.
-- *Cooldown*: 1 hour
-
- Strenth: 5 Constitution: 3 Dexterity: 8 Charisma: 20"
               }]
           `,
         },
@@ -188,6 +162,17 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setIsLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (
+      messages.filter(
+        (message) => message.sender === "user" && !message.summarized
+      ).length >= 5 &&
+      messages[messages.length - 1].text
+    ) {
+      handleGenerateCharacters();
+    }
+  }, [messages]);
 
   return (
     <ScrollArea className="h-full llama relative">

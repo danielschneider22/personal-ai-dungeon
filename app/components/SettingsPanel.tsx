@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import CharacterSettings from "./CharacterSettings";
 import { Character, Message } from "./types";
+import { Button } from "@/components/ui/button";
 
 interface SettingsPanelProps {
   isSettingsOpen: boolean;
@@ -80,7 +81,10 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <Textarea
               placeholder="Plot Essentials"
               value={plotEssentials}
-              onChange={(e) => setPlotEssentials(e.target.value)}
+              onChange={(e) => {
+                localStorage.setItem("plotEssentials", e.target.value);
+                setPlotEssentials(e.target.value);
+              }}
               className="mb-4 flex-grow overflow-scroll resize-none"
             />
             <select
@@ -94,6 +98,14 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 </option>
               ))}
             </select>
+            <Button
+              onClick={() => localStorage.clear()}
+              className="bg-red-600 text-white font-semibold px-4 py-2 rounded-md shadow-md 
+             hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 
+             focus:ring-offset-2 active:bg-red-800 transition duration-200"
+            >
+              Clear Adventure
+            </Button>
           </TabsContent>
           <TabsContent value="characters" className="flex-grow overflow-auto">
             <CharacterSettings

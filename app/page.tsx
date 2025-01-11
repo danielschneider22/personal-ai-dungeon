@@ -15,7 +15,9 @@ const RPGConversation: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [adventureTitle, setAdventureTitle] = useState<string>("");
-  const [aiInstructions, setAiInstructions] = useState<string>("");
+  const [aiInstructions, setAiInstructions] = useState<string>(
+    process.env.NEXT_PUBLIC_STORY_PROMPT!
+  );
   const [plotEssentials, setPlotEssentials] = useState<string>("");
   const [adventures] = useState<string[]>([
     "Current Adventure",
@@ -27,6 +29,25 @@ const RPGConversation: React.FC = () => {
   const [isInputVisible, setIsInputVisible] = useState<boolean>(false);
   const [showImages, setShowImages] = useState<boolean>(true);
   const [summary, setSummary] = useState("");
+
+  useEffect(() => {
+    const localInstructions = localStorage.getItem("aiInstructions");
+    if (localInstructions) setAiInstructions(JSON.parse(localInstructions));
+    const localMessages = localStorage.getItem("messages");
+    if (localMessages) setMessages(JSON.parse(localMessages));
+    const localSummary = localStorage.getItem("summary");
+    if (localSummary) setSummary(localSummary);
+    const localPlotEssentials = localStorage.getItem("plotEssentials");
+    if (localPlotEssentials) setPlotEssentials(localPlotEssentials);
+  }, []);
+
+  // useEffect(() => {
+  //   localStorage.setItem("messages", JSON.stringify(messages));
+  // }, [messages]);
+
+  useEffect(() => {
+    localStorage.setItem("summary", summary);
+  }, [summary]);
 
   useEffect(() => {
     if (
@@ -92,7 +113,11 @@ const RPGConversation: React.FC = () => {
       messages: [
         {
           role: "system",
-          content: process.env.NEXT_PUBLIC_STORY_PROMPT,
+          content: aiInstructions,
+        },
+        {
+          role: "system",
+          content: `Starting story context: ${plotEssentials}"`,
         },
         ...(summary
           ? [
@@ -163,7 +188,7 @@ const RPGConversation: React.FC = () => {
       messages: [
         {
           role: "system",
-          content: process.env.NEXT_PUBLIC_STORY_PROMPT,
+          content: aiInstructions,
         },
         ...(summary
           ? [

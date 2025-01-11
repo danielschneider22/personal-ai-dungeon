@@ -228,11 +228,7 @@ textarea::-webkit-scrollbar {
 .icon-button:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
-/* 
-[data-state="inactive"] {
-  display: none;
-}
 
-[data-state="active"] {
-  display: block;
-} */
+[data-state="inactive"] {
+  max-height: 0;
+}
