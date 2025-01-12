@@ -22,6 +22,7 @@ interface SettingsPanelProps {
   messages: Message[];
   characters: Character[];
   setCharacters: any;
+  setMessages: any;
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -40,6 +41,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   messages,
   characters,
   setCharacters,
+  setMessages,
 }) => {
   return (
     <div
@@ -99,7 +101,13 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               ))}
             </select>
             <Button
-              onClick={() => localStorage.clear()}
+              onClick={() => {
+                localStorage.clear();
+                setMessages([]);
+                setPlotEssentials("");
+                setAiInstructions(process.env.NEXT_PUBLIC_STORY_PROMPT!);
+                setSummary("");
+              }}
               className="bg-red-600 text-white font-semibold px-4 py-2 rounded-md shadow-md 
              hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 
              focus:ring-offset-2 active:bg-red-800 transition duration-200"

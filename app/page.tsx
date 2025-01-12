@@ -325,6 +325,7 @@ const RPGConversation: React.FC = () => {
         messages={messages}
         characters={characters}
         setCharacters={setCharacters}
+        setMessages={setMessages}
       />
     </div>
   );
