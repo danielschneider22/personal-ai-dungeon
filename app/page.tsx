@@ -203,7 +203,7 @@ const RPGConversation: React.FC = () => {
         {
           role: "user",
           content:
-            "The previous message interactions between the assistant the user need to be added to the summary. Change the current summary to include the last series of events. These messages will no longer be included to you, we will just be passing the summary. Be sure to note important all important details. Start with **SUMMARY:** and then **CURRENT SCENE**. Keep track of any statistic changes for characters.",
+            "The previous message interactions between the assistant the user need to be added to the summary. Change the current summary to include the last series of events. These messages will no longer be included to you, we will just be passing the summary. Be sure to note important all important details. Start with **SUMMARY:** and then **CURRENT SCENE**. Keep track of any statistic changes for characters. If the previous summary has long or unnecessay information you can also shorten it, making sure to still capture the important details.",
         },
       ],
     };
