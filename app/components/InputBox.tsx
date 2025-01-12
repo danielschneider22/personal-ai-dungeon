@@ -30,10 +30,12 @@ const InputBox: React.FC<InputBoxProps> = ({
   useEffect(() => {
     if (isInputVisible) {
       textAreaRef.current!.focus();
-      textAreaRef.current!.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
+      setTimeout(() => {
+        textAreaRef.current!.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 300);
     }
   }, [isInputVisible]);
 
