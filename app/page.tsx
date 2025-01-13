@@ -30,7 +30,7 @@ const RPGConversation: React.FC = () => {
     "New Adventure 2",
   ]);
   const [isInputVisible, setIsInputVisible] = useState<boolean>(false);
-  const [showImages, setShowImages] = useState<boolean>(true);
+  const [showImages, setShowImages] = useState<boolean>(false);
   const [summary, setSummary] = useState("");
   const [adventureId, setAdventureId] = useState<string | null>(null);
 
