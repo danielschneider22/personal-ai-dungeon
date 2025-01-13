@@ -21,3 +21,13 @@ export interface Character {
   appearance?: string[];
   meterDesc?: string;
 }
+
+export interface Adventure {
+  messages: Message[];
+  title: string;
+  plotEssentials: string;
+  aiInstructions: string;
+  summary: string;
+  characters: Character[];
+  id?: string;
+}

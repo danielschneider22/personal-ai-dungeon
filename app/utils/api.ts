@@ -36,8 +36,8 @@ export async function getImage(prompt: string | string[]): Promise<string> {
 }
 
 export const getImageOfEvents = async (
-  id: string | number,
   messages: Message[],
+  summary: string,
   characters?: Character[]
 ) => {
   const curatedMessages = messages
@@ -71,12 +71,21 @@ export const getImageOfEvents = async (
             },
           ]
         : []),
+      ...(summary
+        ? [
+            {
+              role: "system",
+              content:
+                "Summary of the events that have happened so far: " + summary,
+            },
+          ]
+        : []),
       ...curatedMessages,
       {
         role: "user",
-        content: `For this response, return a list of strings used to create a stable diffusion prompt of the current person in the scene and their action. The will be used to generate an image for the narrative
+        content: `For this response, return a list of strings used to create a stable diffusion prompt of the current person in the scene and their action based on the last message in the scene. The will be used to generate an image for the narrative
 
-return the comma separated string followed by exactly three pipes ||| then give a descriptor of the name of who is in the scene and what they are doing
+return the comma separated string followed by exactly three pipes ||| describe what the character is doing in the scene. be as accurate as possible to what she is wearing and her current action in the context of the story
 example:
 ${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
 `,
@@ -95,6 +104,6 @@ ${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
     const data = await res.json();
     return data.choices[0].message.content;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 };

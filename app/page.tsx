@@ -7,9 +7,14 @@ import InputBox from "./components/InputBox";
 import MessageList from "./components/MessageList";
 import SettingsPanel from "./components/SettingsPanel";
 import { Character, Message } from "./components/types";
+import { onAuthStateChanged, User } from "firebase/auth";
+import SignIn from "./components/SignIn";
+import { auth } from "@/firebase";
+import { uploadBase64Image } from "./utils/firebase_api";
 import { getImage, getImageOfEvents } from "./utils/api";
 
 const RPGConversation: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -24,30 +29,25 @@ const RPGConversation: React.FC = () => {
     "New Adventure 1",
     "New Adventure 2",
   ]);
-  const [selectedAdventure, setSelectedAdventure] =
-    useState<string>("Current Adventure");
   const [isInputVisible, setIsInputVisible] = useState<boolean>(false);
   const [showImages, setShowImages] = useState<boolean>(true);
   const [summary, setSummary] = useState("");
+  const [adventureId, setAdventureId] = useState<string | null>(null);
 
   useEffect(() => {
-    const localInstructions = localStorage.getItem("aiInstructions");
-    if (localInstructions) setAiInstructions(JSON.parse(localInstructions));
-    const localMessages = localStorage.getItem("messages");
-    if (localMessages) setMessages(JSON.parse(localMessages));
-    const localSummary = localStorage.getItem("summary");
-    if (localSummary) setSummary(localSummary);
-    const localPlotEssentials = localStorage.getItem("plotEssentials");
-    if (localPlotEssentials) setPlotEssentials(localPlotEssentials);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in
+        setUser(user);
+      } else {
+        // User is not signed in
+        setUser(null);
+      }
+    });
+
+    // Cleanup the listener on component unmount
+    return () => unsubscribe();
   }, []);
-
-  // useEffect(() => {
-  //   localStorage.setItem("messages", JSON.stringify(messages));
-  // }, [messages]);
-
-  useEffect(() => {
-    localStorage.setItem("summary", summary);
-  }, [summary]);
 
   useEffect(() => {
     if (
@@ -58,12 +58,20 @@ const RPGConversation: React.FC = () => {
     ) {
       async function makeImage() {
         const id = messages.slice(-1)[0].id;
-        const aiReply = await getImageOfEvents(id, messages, characters);
+        const aiReply = await getImageOfEvents(messages, summary, characters);
         const imgStr = await getImage(aiReply.split("|||")[0]);
+        const imgUrl = await uploadBase64Image(
+          imgStr,
+          "image/png",
+          `messages`,
+          String(id),
+          adventureId!
+        );
+
         setMessages((prev) => {
           const msgToAddImg = prev.find((message) => message.id === id);
           if (msgToAddImg) {
-            msgToAddImg.image = imgStr;
+            msgToAddImg.image = imgUrl;
             msgToAddImg.caption = aiReply.split("|||")[1];
           }
           return [...prev];
@@ -170,7 +178,7 @@ const RPGConversation: React.FC = () => {
         { sender: "assistant", text: aiReply, id: data.id },
       ]);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -203,7 +211,7 @@ const RPGConversation: React.FC = () => {
         {
           role: "user",
           content:
-            "The previous message interactions between the assistant the user need to be added to the summary. Change the current summary to include the last series of events. These messages will no longer be included to you, we will just be passing the summary. Be sure to note important all important details. Start with **SUMMARY:** and then **CURRENT SCENE**. Keep track of any statistic changes for characters. If the previous summary has long or unnecessay information you can also shorten it, making sure to still capture the important details.",
+            "The previous message interactions between the assistant the user need to be added to the summary. Change the current summary to include the last series of events. These messages will no longer be included to you, we will just be passing the summary. Be sure to note important all important details. Start with **SUMMARY:** and then **CURRENT SCENE**. Keep track of any statistic changes for characters. If the previous summary has long or unnecessay information you can also shorten it, making sure to still capture the important details. It is important to remember too much than not enough.",
         },
       ],
     };
@@ -220,6 +228,8 @@ const RPGConversation: React.FC = () => {
       const aiReply = data.choices[0].message.content;
 
       setMessages((prev) => {
+        console.log("SUMMARIZED prev:");
+        console.log(prev);
         return prev.map((message) => {
           return {
             ...message,
@@ -229,7 +239,7 @@ const RPGConversation: React.FC = () => {
       });
       setSummary(aiReply);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -253,7 +263,7 @@ const RPGConversation: React.FC = () => {
   const handleRedrawImage = () => {
     setMessages([
       ...messages.slice(0, messages.length - 1),
-      { ...messages[messages.length - 1], image: undefined },
+      { ...messages[messages.length - 1], image: "" },
     ]);
   };
 
@@ -269,65 +279,74 @@ const RPGConversation: React.FC = () => {
     setShowImages(!showImages);
   };
 
+  console.log(messages);
+
   return (
-    <div className="flex flex-col h-screen bg-gray-900 text-gray-100 font-serif relative">
-      <div className="fixed top-2 right-2 z-50 flex items-center space-x-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleImages}
-          className="rounded-full p-1 hover:bg-gray-700"
-        >
-          {showImages ? (
-            <Eye className="h-6 w-6" />
-          ) : (
-            <EyeOff className="h-6 w-6" />
-          )}
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSettings}
-          className="rounded-full p-1 hover:bg-gray-700"
-        >
-          <Settings className="h-6 w-6" />
-        </Button>
-      </div>
-      <MessageList
-        messages={messages}
-        showImages={showImages}
-        isLoading={isLoading}
-      />
-      <InputBox
-        isInputVisible={isInputVisible}
-        toggleInput={toggleInput}
-        handleSubmit={handleSubmit}
-        handleContinue={handleContinue}
-        handleRetry={handleRetry}
-        handleUndo={handleUndo}
-        handleRedrawImage={handleRedrawImage}
-        messages={messages}
-      />
-      <SettingsPanel
-        isSettingsOpen={isSettingsOpen}
-        toggleSettings={toggleSettings}
-        adventureTitle={adventureTitle}
-        setAdventureTitle={setAdventureTitle}
-        aiInstructions={aiInstructions}
-        setAiInstructions={setAiInstructions}
-        summary={summary}
-        setSummary={setSummary}
-        plotEssentials={plotEssentials}
-        setPlotEssentials={setPlotEssentials}
-        adventures={adventures}
-        selectedAdventure={selectedAdventure}
-        setSelectedAdventure={setSelectedAdventure}
-        messages={messages}
-        characters={characters}
-        setCharacters={setCharacters}
-        setMessages={setMessages}
-      />
-    </div>
+    <>
+      {user && (
+        <div className="flex flex-col h-screen bg-gray-900 text-gray-100 font-serif relative">
+          <div className="fixed top-2 right-2 z-50 flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleImages}
+              className="rounded-full p-1 hover:bg-gray-700"
+            >
+              {showImages ? (
+                <Eye className="h-6 w-6" />
+              ) : (
+                <EyeOff className="h-6 w-6" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSettings}
+              className="rounded-full p-1 hover:bg-gray-700"
+            >
+              <Settings className="h-6 w-6" />
+            </Button>
+          </div>
+          <MessageList
+            messages={messages}
+            showImages={showImages}
+            isLoading={isLoading}
+          />
+          <InputBox
+            isInputVisible={isInputVisible}
+            toggleInput={toggleInput}
+            handleSubmit={handleSubmit}
+            handleContinue={handleContinue}
+            handleRetry={handleRetry}
+            handleUndo={handleUndo}
+            handleRedrawImage={handleRedrawImage}
+            messages={messages}
+          />
+          <SettingsPanel
+            isSettingsOpen={isSettingsOpen}
+            toggleSettings={toggleSettings}
+            adventureTitle={adventureTitle}
+            setAdventureTitle={setAdventureTitle}
+            aiInstructions={aiInstructions}
+            setAiInstructions={setAiInstructions}
+            summary={summary}
+            setSummary={setSummary}
+            plotEssentials={plotEssentials}
+            setPlotEssentials={setPlotEssentials}
+            adventures={adventures}
+            messages={messages}
+            characters={characters}
+            setCharacters={setCharacters}
+            setMessages={setMessages}
+            setUser={setUser}
+            user={user}
+            adventureId={adventureId}
+            setAdventureId={setAdventureId}
+          />
+        </div>
+      )}
+      {!user && <SignIn setUser={setUser} />}
+    </>
   );
 };
 

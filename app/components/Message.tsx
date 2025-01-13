@@ -62,7 +62,7 @@ const MessageComponent: React.FC<MessageProps> = ({
         {message.image && showImages && (
           <div className="mt-2">
             <Image
-              src={`data:image/png;base64,${message.image}`}
+              src={`${message.image}`}
               alt={message.caption || "AI-generated image"}
               width={400}
               height={300}
@@ -75,7 +75,7 @@ const MessageComponent: React.FC<MessageProps> = ({
             )}
           </div>
         )}
-        {message.image === undefined &&
+        {!message.image &&
           message.text &&
           message.sender === "assistant" &&
           showImages && (

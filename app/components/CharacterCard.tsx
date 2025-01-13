@@ -13,7 +13,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character }) => {
         <h3 className="text-xl font-bold">{character.name}</h3>
         {character.image && (
           <Image
-            src={`data:image/png;base64,${character.image}`}
+            src={character.image}
             alt={character.name}
             width={400}
             height={300}
