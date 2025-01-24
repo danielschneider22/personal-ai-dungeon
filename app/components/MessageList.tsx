@@ -17,11 +17,13 @@ const MessageList: React.FC<MessageListProps> = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const [prevMessageCount, setPrevMessageCount] = useState(messages.length);
-  const prevIsLoading = useRef(isLoading); // Keep track of the previous isLoading value
+  const prevIsLoading = useRef(isLoading);
+  const prevShowImages = useRef(showImages);
 
   useEffect(() => {
     if (
       (messages.length !== prevMessageCount ||
+        prevShowImages.current !== showImages ||
         (isLoading === false && prevIsLoading.current === true)) &&
       scrollAreaRef.current &&
       lastMessageRef.current
@@ -31,11 +33,15 @@ const MessageList: React.FC<MessageListProps> = ({
         lastMessageRef.current.offsetTop;
     }
     setPrevMessageCount(messages.length);
-  }, [messages, isLoading]);
+  }, [messages, isLoading, showImages]);
 
   useEffect(() => {
-    prevIsLoading.current = isLoading; // Update the previous isLoading state
+    prevIsLoading.current = isLoading;
   }, [isLoading]);
+
+  useEffect(() => {
+    prevShowImages.current = showImages;
+  }, [showImages]);
 
   return (
     <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>

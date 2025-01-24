@@ -1,0 +1,1 @@
+export const NUM_SUMMARIZE_MESSAGES = 7;

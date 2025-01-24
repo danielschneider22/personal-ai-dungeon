@@ -1,10 +1,24 @@
-import { collection, doc, getDocs, setDoc } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  setDoc,
+} from "firebase/firestore";
 import { Adventure } from "../components/types";
 import { db } from "@/firebase";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  listAll,
+  deleteObject,
+} from "firebase/storage";
 import { getAuth } from "firebase/auth";
+import { debounce } from "lodash";
 
-export const saveAdventure = async (
+export const saveAdventureCall = async (
   adventureId: string,
   userId: string,
   adventure: Adventure
@@ -18,8 +32,9 @@ export const saveAdventure = async (
         aiInstructions: adventure.aiInstructions,
         plotEssentials: adventure.plotEssentials,
         summary: adventure.summary,
-        messages: adventure.messages, // Update only the fields you want
-        characters: adventure.characters,
+        messages: adventure.messages,
+        characters: adventure.characters || [],
+        summarizePrompt: adventure.summarizePrompt,
       },
       { merge: true }
     ); // Merge updates with existing fields
@@ -28,6 +43,9 @@ export const saveAdventure = async (
     console.log(adventure);
   }
 };
+
+// Debounced version of the saveAdventure function
+export const saveAdventure = debounce(saveAdventureCall, 1000); // 1000ms delay
 
 export const createAdventure = async (
   userId: string,
@@ -53,6 +71,56 @@ export const createAdventure = async (
     throw Error("Failed to save adventure");
   }
 };
+
+async function deleteAdventureImages(userId: string, adventureId: string) {
+  const storage = getStorage();
+  const rootPath = `images/${userId}/${adventureId}`;
+  const rootRef = ref(storage, rootPath);
+
+  async function deleteFolderRecursive(folderRef: any) {
+    try {
+      // List all files and subfolders in the current folder
+      const listResult = await listAll(folderRef);
+
+      // Delete all files in the current folder
+      const deleteFilePromises = listResult.items.map((itemRef) =>
+        deleteObject(itemRef)
+      );
+
+      // Recursively delete all subfolders
+      const deleteFolderPromises = listResult.prefixes.map((subFolderRef) =>
+        deleteFolderRecursive(subFolderRef)
+      );
+
+      // Wait for all deletions to complete
+      await Promise.all([...deleteFilePromises, ...deleteFolderPromises]);
+      console.log(`Deleted contents of folder: ${folderRef.fullPath}`);
+    } catch (error) {
+      console.error(`Error deleting folder ${folderRef.fullPath}:`, error);
+    }
+  }
+
+  // Start the recursive deletion from the root path
+  try {
+    await deleteFolderRecursive(rootRef);
+    console.log(
+      `Successfully deleted all files and folders under: ${rootPath}`
+    );
+  } catch (error) {
+    console.error(`Error deleting adventure images under ${rootPath}:`, error);
+  }
+}
+
+export async function deleteAdventure(userId: string, adventureId: string) {
+  const adventureRef = doc(db, "users", userId, "adventures", adventureId);
+  try {
+    await deleteDoc(adventureRef);
+    await deleteAdventureImages(userId, adventureId);
+    console.log("Adventure deleted successfully");
+  } catch (error) {
+    console.error("Error deleting adventure:", error);
+  }
+}
 
 export const getAdventures = async (userId: string) => {
   const adventuresRef = collection(db, "users", userId, "adventures");

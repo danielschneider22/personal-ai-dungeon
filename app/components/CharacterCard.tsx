@@ -1,12 +1,22 @@
 import Image from "next/image";
 import { Character } from "./types";
 import { addPink } from "./Message";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Trash } from "lucide-react";
 
 interface CharacterCardProps {
   character: Character;
+  changeCharacter: (key: (string | number)[], value: any) => void;
+  addToCharacter: (key: (string | number)[], value: any) => void;
+  deleteFromCharacter: (key: (string | number)[]) => void;
 }
 
-const CharacterCard: React.FC<CharacterCardProps> = ({ character }) => {
+const CharacterCard: React.FC<CharacterCardProps> = ({
+  character,
+  changeCharacter,
+  addToCharacter,
+  deleteFromCharacter,
+}) => {
   return (
     <div key={character.id} className="mb-6 p-4 bg-gray-800 rounded-lg">
       <div className="flex items-center mb-4 row flex-col gap-3">
@@ -80,29 +90,89 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character }) => {
           <h4 className="font-semibold mb-1">Appearance:</h4>
           <ul className="list-disc list-inside">
             {character.appearance.map((appearance, index) => (
-              <li key={`${appearance}-${index}`}>{addPink(appearance)}</li> // Combining trait with index for uniqueness
+              <li key={`${character.name}-"Appearance"-${index}`}>
+                {addPink(appearance)}
+              </li> // Combining trait with index for uniqueness
             ))}
           </ul>
         </div>
       )}
-      {character?.traits?.length && (
-        <div className="p-4 rounded-2xl mb-2">
-          <h4 className="font-semibold mb-1">Traits:</h4>
-          <ul className="list-disc list-inside">
+      {(character?.traits?.length || !character.mainCharacter) && (
+        <div className="p-4 rounded-2xl mb-2 flex flex-col items-center gap-2">
+          <h4 className="font-semibold">Traits:</h4>
+          <ul className="list-disc list-inside flex flex-col gap-4 w-full">
             {character.traits.map((trait, index) => (
-              <li key={`${trait}-${index}`}>{addPink(trait)}</li> // Combining trait with index for uniqueness
+              <li
+                key={`${character.name}-trait-${index}`}
+                className="list-none flex align-items justify-center items-center"
+              >
+                <Textarea
+                  onChange={(e) =>
+                    changeCharacter(["traits", index], e.target.value)
+                  }
+                  className="flex-grow overflow-scroll"
+                  value={trait}
+                ></Textarea>
+                <button
+                  className="flex items-center justify-center w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md focus:outline-none focus:ring-2 focus:ring-red-300 ml-2"
+                  aria-label="Delete"
+                >
+                  <Trash
+                    className="w-5 h-5"
+                    onClick={() => deleteFromCharacter(["traits", index])}
+                  />
+                </button>
+              </li>
             ))}
           </ul>
+          <button
+            className="flex items-center justify-center w-10 h-10 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-md focus:outline-none focus:ring-2 focus:ring-green-300"
+            aria-label="Add"
+          >
+            <Plus
+              className="w-5 h-5"
+              onClick={() => addToCharacter(["traits"], "")}
+            />
+          </button>
         </div>
       )}
       {character?.goals?.length && (
-        <div className="p-4 rounded-2xl mb-2">
-          <h4 className="font-semibold mb-1">Goals:</h4>
-          <ul className="list-disc list-inside">
+        <div className="p-4 rounded-2xl mb-2 flex flex-col items-center gap-2">
+          <h4 className="font-semibold">Goals:</h4>
+          <ul className="list-disc list-inside flex flex-col gap-4 w-full">
             {character.goals.map((goal, index) => (
-              <li key={`${goal}-${index}`}>{addPink(goal)}</li> // Combining goal with index for uniqueness
+              <li
+                key={`${character.name}-goal-${index}`}
+                className="list-none flex align-items justify-center items-center"
+              >
+                <Textarea
+                  onChange={(e) =>
+                    changeCharacter(["goals", index], e.target.value)
+                  }
+                  className="flex-grow overflow-scroll"
+                  value={goal}
+                ></Textarea>
+                <button
+                  className="flex items-center justify-center w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md focus:outline-none focus:ring-2 focus:ring-red-300 ml-2"
+                  aria-label="Delete"
+                >
+                  <Trash
+                    className="w-5 h-5"
+                    onClick={() => deleteFromCharacter(["goals", index])}
+                  />
+                </button>
+              </li>
             ))}
           </ul>
+          <button
+            className="flex items-center justify-center w-10 h-10 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-md focus:outline-none focus:ring-2 focus:ring-green-300"
+            aria-label="Add"
+          >
+            <Plus
+              className="w-5 h-5"
+              onClick={() => addToCharacter(["goals"], "")}
+            />
+          </button>
         </div>
       )}
       {character.misc && (

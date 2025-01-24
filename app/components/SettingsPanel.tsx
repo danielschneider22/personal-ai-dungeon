@@ -9,6 +9,7 @@ import {
   createAdventure,
   getAdventures,
   saveAdventure,
+  deleteAdventure,
 } from "../utils/firebase_api";
 import { User } from "firebase/auth";
 import { useEffect, useMemo, useState } from "react";
@@ -33,7 +34,18 @@ interface SettingsPanelProps {
   user: User;
   adventureId: string | null;
   setAdventureId: any;
+  summarizePrompt: string;
+  setSummarizePrompt: any;
 }
+const emptyAdventure: Adventure = {
+  messages: [],
+  title: "",
+  plotEssentials: "",
+  aiInstructions: process.env.NEXT_PUBLIC_STORY_PROMPT!,
+  summary: "",
+  characters: [],
+  summarizePrompt: process.env.NEXT_PUBLIC_SUMMARIZE_PROMPT!,
+};
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
   isSettingsOpen,
@@ -53,6 +65,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   setMessages,
   adventureId,
   setAdventureId,
+  summarizePrompt,
+  setSummarizePrompt,
 }) => {
   const compiledAdventure = useMemo(() => {
     return {
@@ -62,6 +76,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       summary,
       title: adventureTitle,
       characters: characters,
+      summarizePrompt,
     };
   }, [
     adventureTitle,
@@ -80,18 +95,22 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     if (list.length && list[0].id) setActiveAdventure(list[0]);
   }
   async function doCreateAdventure() {
-    const emptyAdventure: Adventure = {
-      messages: [],
-      title: "",
-      plotEssentials: "",
-      aiInstructions: process.env.NEXT_PUBLIC_STORY_PROMPT!,
-      summary: "",
-      characters: [],
-    };
-    const id = await createAdventure(user.uid, emptyAdventure);
-    setActiveAdventure(emptyAdventure);
+    const id = await createAdventure(user.uid, { ...emptyAdventure });
+    setActiveAdventure({ ...emptyAdventure });
     setAdventureId(id);
     doGetAdventureList();
+  }
+
+  async function doDeleteAdventure() {
+    const userConfirmed = window.confirm(
+      "Are you sure you want to delete this adventure? This action cannot be undone!"
+    );
+    if (userConfirmed) {
+      await deleteAdventure(user.uid, adventureId!);
+      setActiveAdventure({ ...emptyAdventure });
+      setAdventureId(null);
+      doGetAdventureList();
+    }
   }
 
   useEffect(() => {
@@ -106,6 +125,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     plotEssentials,
     messages,
     adventureId,
+    summarizePrompt,
   ]);
 
   function setActiveAdventure(adventure: string | Adventure) {
@@ -119,6 +139,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setAdventureTitle(objAdventure.title);
       setAiInstructions(objAdventure.aiInstructions);
       setSummary(objAdventure.summary);
+      setSummarizePrompt(
+        objAdventure.summarizePrompt || process.env.NEXT_PUBLIC_SUMMARIZE_PROMPT
+      );
       setPlotEssentials(objAdventure.plotEssentials);
       setMessages(objAdventure.messages);
       setCharacters(objAdventure.characters);
@@ -128,6 +151,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   useEffect(() => {
     doGetAdventureList();
   }, []);
+
+  console.log(adventureList);
+  console.log("llama");
 
   return (
     <div
@@ -152,21 +178,28 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               placeholder="Adventure Title"
               value={adventureTitle}
               onChange={(e) => setAdventureTitle(e.target.value)}
-              className="mb-4 overflow-scroll resize-none"
+              className="mb-4 overflow-scroll"
               disabled={!adventureList.length}
             />
             <Textarea
               placeholder="AI Instructions"
               value={aiInstructions}
               onChange={(e) => setAiInstructions(e.target.value)}
-              className="mb-4 flex-grow overflow-scroll resize-none"
+              className="mb-4 flex-grow overflow-scroll"
+              disabled={!adventureList.length}
+            />
+            <Textarea
+              placeholder="AI summarize instructions"
+              value={summarizePrompt}
+              onChange={(e) => setSummarizePrompt(e.target.value)}
+              className="mb-4 flex-grow overflow-scroll"
               disabled={!adventureList.length}
             />
             <Textarea
               placeholder="Story Summary"
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
-              className="mb-4 flex-grow overflow-scroll resize-none"
+              className="mb-4 flex-grow overflow-scroll"
               disabled={!adventureList.length}
             />
             <Textarea
@@ -175,7 +208,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               onChange={(e) => {
                 setPlotEssentials(e.target.value);
               }}
-              className="mb-4 flex-grow overflow-scroll resize-none"
+              className="mb-4 flex-grow overflow-scroll"
               disabled={!adventureList.length}
             />
             <select
@@ -186,7 +219,10 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               disabled={!adventureList.length}
             >
               {adventureList.map((adventure) => (
-                <option key={adventure.id} value={adventure.id}>
+                <option
+                  key={adventure.title + adventure.id}
+                  value={adventure.id}
+                >
                   {(adventure.id === adventureId
                     ? adventureTitle
                     : adventure.title) || "[No Title Set]"}
@@ -217,6 +253,15 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               Create New Adventure
             </Button>
             <SignOut setUser={setUser} />
+            <Button
+              onClick={doDeleteAdventure}
+              className="bg-red-600 text-white font-semibold px-4 py-2 rounded-md shadow-md 
+             hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 
+             focus:ring-offset-2 active:bg-red-800 transition duration-200 mt-2"
+              style={{ marginLeft: 2, marginRight: 2 }}
+            >
+              Delete Adventure
+            </Button>
           </TabsContent>
           <TabsContent value="characters" className="flex-grow overflow-auto">
             <CharacterSettings

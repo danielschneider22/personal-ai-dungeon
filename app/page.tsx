@@ -12,6 +12,7 @@ import SignIn from "./components/SignIn";
 import { auth } from "@/firebase";
 import { uploadBase64Image } from "./utils/firebase_api";
 import { getImage, getImageOfEvents } from "./utils/api";
+import { NUM_SUMMARIZE_MESSAGES } from "@/lib/consts";
 
 const RPGConversation: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -32,6 +33,9 @@ const RPGConversation: React.FC = () => {
   const [isInputVisible, setIsInputVisible] = useState<boolean>(false);
   const [showImages, setShowImages] = useState<boolean>(false);
   const [summary, setSummary] = useState("");
+  const [summarizePrompt, setSummarizePrompt] = useState(
+    process.env.NEXT_PUBLIC_SUMMARIZE_PROMPT
+  );
   const [adventureId, setAdventureId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -78,15 +82,27 @@ const RPGConversation: React.FC = () => {
         });
       }
 
-      makeImage();
+      if (showImages) {
+        makeImage();
+      } else {
+        const id = messages.slice(-1)[0].id;
+        setMessages((prev) => {
+          const msgToAddImg = prev.find((message) => message.id === id);
+          if (msgToAddImg) {
+            msgToAddImg.image = "noImage";
+            msgToAddImg.caption = "No image";
+          }
+          return [...prev];
+        });
+      }
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, showImages]);
 
   useEffect(() => {
     if (
       messages.filter(
         (message) => message.sender === "user" && !message.summarized
-      ).length >= 5 &&
+      ).length >= NUM_SUMMARIZE_MESSAGES &&
       !isLoading
     ) {
       handleSummarize();
@@ -141,16 +157,24 @@ const RPGConversation: React.FC = () => {
               {
                 role: "system",
                 content:
-                  "JSON object representing characters in the story" +
-                  JSON.stringify(
-                    characters.map((character) => {
-                      return {
-                        name: character.name,
-                        appearance: character.appearance,
-                        sLevel: character.meterDesc,
-                      };
+                  "Characters in the story with their traits and goals. Use these to dictate behavior in the story" +
+                  characters
+                    .filter((character) => !character.mainCharacter)
+                    .map((character) => {
+                      let combinedString = "Name: " + character.name + "\n";
+                      combinedString =
+                        combinedString +
+                        "Goals: " +
+                        character.goals.join(", ") +
+                        "\n";
+                      combinedString =
+                        combinedString +
+                        "Traits: " +
+                        character.traits.join(", ") +
+                        "\n";
+                      return combinedString;
                     })
-                  ),
+                    .join(" ||| "),
               },
             ]
           : []),
@@ -210,8 +234,7 @@ const RPGConversation: React.FC = () => {
         ...nonSummarizedMessages,
         {
           role: "user",
-          content:
-            "The previous message interactions between the assistant the user need to be added to the summary. Change the current summary to include the last series of events. These messages will no longer be included to you, we will just be passing the summary. Be sure to note important all important details. Start with **SUMMARY:** and then **CURRENT SCENE**. Keep track of any statistic changes for characters. If the previous summary has long or unnecessay information you can also shorten it, making sure to still capture the important details. It is important to remember too much than not enough.",
+          content: summarizePrompt,
         },
       ],
     };
@@ -342,6 +365,8 @@ const RPGConversation: React.FC = () => {
             user={user}
             adventureId={adventureId}
             setAdventureId={setAdventureId}
+            summarizePrompt={summarizePrompt!}
+            setSummarizePrompt={setSummarizePrompt}
           />
         </div>
       )}

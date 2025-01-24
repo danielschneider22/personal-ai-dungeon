@@ -2,6 +2,8 @@ import Image from "next/image";
 import { Message } from "./types";
 import { Ref } from "react";
 
+import noImage from "../assets/noImage.jpg";
+
 export function addPink(text: string) {
   return text.split("***LEWD***").map((part, index) => {
     if (index % 2 !== 0) {
@@ -62,7 +64,9 @@ const MessageComponent: React.FC<MessageProps> = ({
         {message.image && showImages && (
           <div className="mt-2">
             <Image
-              src={`${message.image}`}
+              src={`${
+                message.image === "noImage" ? noImage.src : message.image
+              }`}
               alt={message.caption || "AI-generated image"}
               width={400}
               height={300}

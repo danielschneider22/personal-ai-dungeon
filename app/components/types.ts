@@ -28,6 +28,7 @@ export interface Adventure {
   plotEssentials: string;
   aiInstructions: string;
   summary: string;
+  summarizePrompt: string;
   characters: Character[];
   id?: string;
 }
