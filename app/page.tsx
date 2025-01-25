@@ -157,7 +157,7 @@ const RPGConversation: React.FC = () => {
               {
                 role: "system",
                 content:
-                  "Characters in the story with their traits and goals. Use these to dictate behavior in the story" +
+                  "Characters in the story with their traits, goals, and description. Use these to dictate their behavior in the story" +
                   characters
                     .filter((character) => !character.mainCharacter)
                     .map((character) => {
@@ -171,6 +171,11 @@ const RPGConversation: React.FC = () => {
                         combinedString +
                         "Traits: " +
                         character.traits.join(", ") +
+                        "\n";
+                      combinedString =
+                        combinedString +
+                        "Description: " +
+                        character.description +
                         "\n";
                       return combinedString;
                     })

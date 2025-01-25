@@ -59,7 +59,11 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
           </div>
         )}
       </div>
-      <p className="mb-2">{addPink(character.description)}</p>
+      <Textarea
+        className="mb-2 h-60 overflow-scroll"
+        value={character.description}
+        onChange={(e) => changeCharacter(["description"], e.target.value)}
+      ></Textarea>
       {!character.mainCharacter && (
         <div className="mb-2">
           <h4 className="text-white font-semibold mb-1">Slut level:</h4>
@@ -110,7 +114,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
                   onChange={(e) =>
                     changeCharacter(["traits", index], e.target.value)
                   }
-                  className="flex-grow overflow-scroll"
+                  className="flex-grow overflow-scroll h-28"
                   value={trait}
                 ></Textarea>
                 <button
@@ -149,7 +153,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
                   onChange={(e) =>
                     changeCharacter(["goals", index], e.target.value)
                   }
-                  className="flex-grow overflow-scroll"
+                  className="flex-grow overflow-scroll h-28"
                   value={goal}
                 ></Textarea>
                 <button

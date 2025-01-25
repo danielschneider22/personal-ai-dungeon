@@ -77,26 +77,26 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               },
             ]
           : []),
-        ...(characters.length
-          ? [
-              {
-                role: "system",
-                content:
-                  "Previous character profiles " +
-                  JSON.stringify(
-                    characters.map((character) => {
-                      return {
-                        name: character.name,
-                        description: character.description,
-                        meter: character.meter,
-                        traits: character.traits.toString(),
-                        goals: character.goals.toString(),
-                      };
-                    })
-                  ),
-              },
-            ]
-          : []),
+        // ...(characters.length
+        //   ? [
+        //       {
+        //         role: "system",
+        //         content:
+        //           "Previous character profiles " +
+        //           JSON.stringify(
+        //             characters.map((character) => {
+        //               return {
+        //                 name: character.name,
+        //                 description: character.description,
+        //                 meter: character.meter,
+        //                 traits: character.traits.toString(),
+        //                 goals: character.goals.toString(),
+        //               };
+        //             })
+        //           ),
+        //       },
+        //     ]
+        //   : []),
         ...nonSummarizedMessages,
         {
           role: "user",
@@ -111,46 +111,13 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           
           Ensure the returned value is valid json. 
 
-          meter is a slut meter, a representation of how slutty the character is. It is a number that is min 0 max 100. if there is a slut level in the story, use this number. do not include for main character
-          (Meter based on level:
-          Prudish (0-15)
-          Doesn’t masturbate
-          Dresses prudish showing no skin
-          Judges people who think about or have sex
+          description is a couple paragraphs about the character's personality and their relationship to you in the story.
 
-          Less prudish (15-30)
-          Jealous of women getting attention 
-          Masturbates monthly
-          Shows a hint of cleavage
+          meter is a slut meter, a representation of how slutty the character is. It is a number that is min 0 max 100. if there is a slut level in the story, use this number. all women start between 0-5 slut level unless they are particularlly slutty
+         
+          meterDesc is a detailed description of how depraved and sexual a character is. it should describe specific actions the character has take in the story.
 
-          Not prudish (30-50)
-          Masturbates weekly
-          Shows a good amount of cleavage
-          Starts wearing more form fitting attire
-          Starts fantasizing about sex
-
-          Experimental (50-75)
-          Dresses provocatively with clothes that show a lot of cleavage and short skirts
-          Masturbates daily
-          Likes bending over to draw attention to her butt and boobs
-          Fantasizes about giving blowjobs and getting fucked
-
-          Sexual (75-90)
-          Masturbates more than once a day
-          Masturbates at work in the bathroom
-          Wears Incredibly short skirts that show the bottom of her butt
-          Boobs almost falling out of dresses
-          Sometimes doesn’t wear underwear
-          Constantly distracted thinking about sex and how to get it
-
-          Slutty (90-100)
-          Masturbates openly at work
-          Doesn’t wear underwear 
-          Thinks only about sex
-          Constantly begs for sex)
-          meterDesc is a detailed description of how depraved they are based on their meter number. make sure the description matches the meter level described above, they should be no more or less sexual than their level. this should be at least a couple paragraphs and detail events of the story with this character. be more descriptive than just the trait definitions above
-
-          traits are a series of characteristics that have developed for the character. append to the existing list and only remove traits if they've changed.
+          traits are a series of characteristics that have developed for the character. append to the existing list and only remove traits if they've changed. never have more than 10 traits. only have 1-2 traits for the main character.
 
           goals is that characters current goals. append to the existing list and only remove goals if they've changed.
 

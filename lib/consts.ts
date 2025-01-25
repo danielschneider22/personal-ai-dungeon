@@ -1,1 +1,1 @@
-export const NUM_SUMMARIZE_MESSAGES = 7;
+export const NUM_SUMMARIZE_MESSAGES = 10;
