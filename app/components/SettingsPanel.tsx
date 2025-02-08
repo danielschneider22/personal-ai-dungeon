@@ -14,6 +14,8 @@ import {
 import { User } from "firebase/auth";
 import { useEffect, useMemo, useState } from "react";
 import { Expand } from "lucide-react";
+import { NUM_SUMMARIZE_MESSAGES } from "@/lib/consts";
+import { AdminArea } from "./AdminArea";
 
 interface SettingsPanelProps {
   isSettingsOpen: boolean;
@@ -199,6 +201,25 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     doGetAdventureList();
   }, []);
 
+  const disallowChange =
+    messages.filter(
+      (message) => message.sender === "user" && !message.summarized
+    ).length >= NUM_SUMMARIZE_MESSAGES && !!messages[messages.length - 1].text;
+
+  const disabledFields = !adventureList.length || disallowChange;
+
+  const uniqueAdventures = Array.from(
+    adventureList
+      .reduce((map, adventure) => {
+        const key = `${adventure.id ?? ""}-${adventure.title}`;
+        if (!map.has(key)) {
+          map.set(key, adventure);
+        }
+        return map;
+      }, new Map<string, Adventure>())
+      .values()
+  );
+
   return (
     <div
       className={`fixed inset-0 bg-gray-900/95 transition-transform duration-300 ease-in-out h-screen ${
@@ -211,6 +232,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <TabsList className="bg-transparent">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="characters">Characters</TabsTrigger>
+              <TabsTrigger value="admin">Admin</TabsTrigger>
             </TabsList>
           </div>
           <TabsContent
@@ -223,7 +245,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               value={adventureTitle}
               onChange={(e) => setAdventureTitle(e.target.value)}
               className="mb-4 overflow-scroll"
-              disabled={!adventureList.length}
+              disabled={disabledFields}
             />
             <div
               className={`mb-4 flex-grow relative ${
@@ -235,7 +257,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 value={aiInstructions}
                 onChange={(e) => setAiInstructions(e.target.value)}
                 className="h-full overflow-scroll"
-                disabled={!adventureList.length}
+                disabled={disabledFields}
               />
               <Button
                 className="absolute right-1 -top-1.5 w-5 h-5 bg-green-600 text-white font-semibold rounded-md shadow-md 
@@ -257,7 +279,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 value={summarizePrompt}
                 onChange={(e) => setSummarizePrompt(e.target.value)}
                 className="h-full overflow-scroll"
-                disabled={!adventureList.length}
+                disabled={disabledFields}
               />
               <Button
                 className="absolute right-1 -top-1.5 w-5 h-5 bg-green-600 text-white font-semibold rounded-md shadow-md 
@@ -278,7 +300,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 value={summary}
                 onChange={(e) => setSummary(e.target.value)}
                 className="h-full overflow-scroll"
-                disabled={!adventureList.length}
+                disabled={disabledFields}
               />
               <Button
                 className="absolute right-1 -top-1.5 w-5 h-5 bg-green-600 text-white font-semibold rounded-md shadow-md 
@@ -301,7 +323,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   setPlotEssentials(e.target.value);
                 }}
                 className="h-full overflow-scroll"
-                disabled={!adventureList.length}
+                disabled={disabledFields}
               />
               <Button
                 className="absolute right-1 -top-1.5 w-5 h-5 bg-green-600 text-white font-semibold rounded-md shadow-md 
@@ -317,9 +339,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               onChange={(e) => setActiveAdventure(e.target.value)}
               className="mb-4 bg-gray-700 text-gray-100 rounded-md p-2"
               style={{ marginLeft: 2, marginRight: 2 }}
-              disabled={!adventureList.length}
+              disabled={disabledFields}
             >
-              {adventureList.map((adventure) => (
+              {uniqueAdventures.map((adventure) => (
                 <option
                   key={adventure.title + adventure.id}
                   value={adventure.id}
@@ -330,20 +352,6 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 </option>
               ))}
             </select>
-            {/* <Button
-              onClick={() => {
-                localStorage.clear();
-                setMessages([]);
-                setPlotEssentials("");
-                setAiInstructions(process.env.NEXT_PUBLIC_STORY_PROMPT!);
-                setSummary("");
-              }}
-              className="bg-red-600 text-white font-semibold px-4 py-2 rounded-md shadow-md 
-             hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 
-             focus:ring-offset-2 active:bg-red-800 transition duration-200"
-            >
-              Clear Adventure
-            </Button> */}
             <div className="flex w-full justify-center">
               <Button
                 onClick={doCreateAdventure}
@@ -383,6 +391,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               summary={summary}
               adventureId={adventureId!}
             />
+          </TabsContent>
+          <TabsContent
+            value="admin"
+            className="flex-grow flex flex-col overflow-visible"
+          >
+            <AdminArea />
           </TabsContent>
         </Tabs>
       </div>

@@ -129,7 +129,13 @@ export const getAdventures = async (userId: string) => {
 
   querySnapshot.forEach((doc) => {
     const adventure: Adventure = doc.data() as Adventure;
-    adventures.push({ id: doc.id, ...adventure });
+    adventures.push({
+      id: doc.id,
+      ...adventure,
+      messages: adventure.messages.map((m) => {
+        return { ...m, summarized: true };
+      }),
+    });
   });
 
   return adventures;

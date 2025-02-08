@@ -77,43 +77,37 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               },
             ]
           : []),
-        // ...(characters.length
-        //   ? [
-        //       {
-        //         role: "system",
-        //         content:
-        //           "Previous character profiles " +
-        //           JSON.stringify(
-        //             characters.map((character) => {
-        //               return {
-        //                 name: character.name,
-        //                 description: character.description,
-        //                 meter: character.meter,
-        //                 traits: character.traits.toString(),
-        //                 goals: character.goals.toString(),
-        //               };
-        //             })
-        //           ),
-        //       },
-        //     ]
-        //   : []),
+        ...(characters.length
+          ? [
+              {
+                role: "system",
+                content:
+                  "Previous character profiles " +
+                  JSON.stringify(
+                    characters.map((character) => {
+                      return {
+                        name: character.name,
+                        description: character.description,
+                        meter: character.meter,
+                        traits: character.traits.toString(),
+                        goals: character.goals.toString(),
+                      };
+                    })
+                  ),
+              },
+            ]
+          : []),
         ...nonSummarizedMessages,
         {
           role: "user",
           content: `
 
-          Based on the current story generate an array of characters based on the current events in the story using the model outlined below. Don't be repetitive.
+          Based on the current story generate an array of characters based on the current events in the story using the model outlined below. Don't be repetitive. Ensure the output is a valid javascript array.
           Important: only include the array in the output. For elements of the array, always provide the keys provided and just those keys (name, description, meter, traits, imageDesc, goals, misc, and mainCharacter). We will be using eval(response) to parse this array.
-          ${
-            characters.length &&
-            `Use the previous character profiles as a basis. `
-          }
-          
-          Ensure the returned value is valid json. 
 
           description is a couple paragraphs about the character's personality and their relationship to you in the story.
 
-          meter is a slut meter, a representation of how slutty the character is. It is a number that is min 0 max 100. if there is a slut level in the story, use this number. all women start between 0-5 slut level unless they are particularlly slutty
+          meter is a slut meter, a representation of how slutty the character is. It is a number that is min 0 max 100. if there is a slut level in the story, use this number. all women start between 0-5 slut level unless they are particularlly slutty. This should increase based on the events of the story.
          
           meterDesc is a detailed description of how depraved and sexual a character is. it should describe specific actions the character has take in the story.
 

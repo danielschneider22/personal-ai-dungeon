@@ -256,8 +256,6 @@ const RPGConversation: React.FC = () => {
       const aiReply = data.choices[0].message.content;
 
       setMessages((prev) => {
-        console.log("SUMMARIZED prev:");
-        console.log(prev);
         return prev.map((message) => {
           return {
             ...message,
