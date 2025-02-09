@@ -16,6 +16,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Expand } from "lucide-react";
 import { NUM_SUMMARIZE_MESSAGES } from "@/lib/consts";
 import { AdminArea } from "./AdminArea";
+import { useAdmin } from "../utils/adminContext";
 
 interface SettingsPanelProps {
   isSettingsOpen: boolean;
@@ -39,16 +40,8 @@ interface SettingsPanelProps {
   setAdventureId: any;
   summarizePrompt: string;
   setSummarizePrompt: any;
+  showImages: boolean;
 }
-const emptyAdventure: Adventure = {
-  messages: [],
-  title: "",
-  plotEssentials: "",
-  aiInstructions: process.env.NEXT_PUBLIC_STORY_PROMPT!,
-  summary: "",
-  characters: [],
-  summarizePrompt: process.env.NEXT_PUBLIC_SUMMARIZE_PROMPT!,
-};
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
   isSettingsOpen,
@@ -70,7 +63,10 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   setAdventureId,
   summarizePrompt,
   setSummarizePrompt,
+  showImages,
 }) => {
+  const { isAdmin } = useAdmin();
+
   const compiledAdventure = useMemo(() => {
     return {
       messages,
@@ -89,6 +85,20 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     plotEssentials,
     messages,
   ]);
+
+  const emptyAdventure: Adventure = {
+    messages: [],
+    title: "",
+    plotEssentials: "",
+    aiInstructions: isAdmin
+      ? process.env.NEXT_PUBLIC_STORY_PROMPT!
+      : process.env.NEXT_PUBLIC_STORY_PROMPT_PC!,
+    summary: "",
+    characters: [],
+    summarizePrompt: isAdmin
+      ? process.env.NEXT_PUBLIC_SUMMARIZE_PROMPT!
+      : process.env.NEXT_PUBLIC_SUMMARIZE_PROMPT_PC!,
+  };
 
   const [adventureList, setAdventureList] = useState<Adventure[]>([]);
   const [activeTextArea, setActiveTextArea] = useState<string | null>(null);
@@ -128,8 +138,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           : []),
         {
           role: "user",
-          content:
-            "The previous system message is a summary of the events of the story so far, but is currently too long and contains unnecessary information. Summarize the summary, keeping only the important aspects of the plot and depictions of characters and their actions. If the story is divided into chapters, try and summarize the individual chapters.",
+          content: `The previous system message is a summary of the events of the story so far, but is currently too long and contains unnecessary information. Summarize the summary, keeping only the important aspects of the plot and depictions of characters and their actions. If the story is divided into chapters, try and summarize the individual chapters. Keep the framework of the summary the same though. `,
         },
       ],
     };
@@ -189,7 +198,10 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setAiInstructions(objAdventure.aiInstructions);
       setSummary(objAdventure.summary);
       setSummarizePrompt(
-        objAdventure.summarizePrompt || process.env.NEXT_PUBLIC_SUMMARIZE_PROMPT
+        objAdventure.summarizePrompt ||
+          (isAdmin
+            ? process.env.NEXT_PUBLIC_SUMMARIZE_PROMPT
+            : process.env.NEXT_PUBLIC_SUMMARIZE_PROMPT_PC)
       );
       setPlotEssentials(objAdventure.plotEssentials);
       setMessages(objAdventure.messages);
@@ -207,18 +219,6 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     ).length >= NUM_SUMMARIZE_MESSAGES && !!messages[messages.length - 1].text;
 
   const disabledFields = !adventureList.length || disallowChange;
-
-  const uniqueAdventures = Array.from(
-    adventureList
-      .reduce((map, adventure) => {
-        const key = `${adventure.id ?? ""}-${adventure.title}`;
-        if (!map.has(key)) {
-          map.set(key, adventure);
-        }
-        return map;
-      }, new Map<string, Adventure>())
-      .values()
-  );
 
   return (
     <div
@@ -341,16 +341,17 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               style={{ marginLeft: 2, marginRight: 2 }}
               disabled={disabledFields}
             >
-              {uniqueAdventures.map((adventure) => (
-                <option
-                  key={adventure.title + adventure.id}
-                  value={adventure.id}
-                >
-                  {(adventure.id === adventureId
-                    ? adventureTitle
-                    : adventure.title) || "[No Title Set]"}
-                </option>
-              ))}
+              {adventureList &&
+                adventureList.map((adventure) => (
+                  <option
+                    key={adventure.title + adventure.id}
+                    value={adventure.id}
+                  >
+                    {(adventure.id === adventureId
+                      ? adventureTitle
+                      : adventure.title) || "[No Title Set]"}
+                  </option>
+                ))}
             </select>
             <div className="flex w-full justify-center">
               <Button
@@ -390,6 +391,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               messages={messages}
               summary={summary}
               adventureId={adventureId!}
+              showImages={showImages}
             />
           </TabsContent>
           <TabsContent

@@ -1,22 +1,38 @@
 import { Character, Message } from "../components/types";
 
-export async function getImage(prompt: string | string[]): Promise<string> {
+export async function getImage(
+  prompt: string | string[],
+  isAdmin: boolean
+): Promise<string> {
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
 
   const raw = JSON.stringify({
     prompt: typeof prompt === "string" ? prompt : prompt.toString(),
-    negative_prompt:
-      "score_6, score_5, score_4, pony, gaping, censored, furry, child, kid, chibi, 3d, photo, monochrome, elven ears, anime, multiple cocks, extra legs, extra hands, mutated legs, mutated hands, big man, high man, muscular man, muscular hands",
-    width: 832,
-    height: 1216,
+    negative_prompt: isAdmin
+      ? "score_6, score_5, score_4, pony, gaping, censored, furry, child, kid, chibi, 3d, photo, monochrome, elven ears, anime, multiple cocks, extra legs, extra hands, mutated legs, mutated hands, big man, high man, muscular man, muscular hands"
+      : ` nude, flower, facial marking, (women:1.2), (female:1.2), blue jeans, 3d,
+render, doll, plastic, blur, haze, monochrome, b&w, text, (ugly:1.2),
+unclear eyes, no arms, bad anatomy, cropped, censoring,
+asymmetric eyes, bad anatomy, bad proportions, cropped,
+cross-eyed, deformed, extra arms, extra fingers, extra limbs, fused
+fingers, jpeg artifacts, malformed, mangled hands, misshapen
+body, missing arms, missing fingers, missing hands, missing legs,
+poorly drawn, tentacle fingers, too many arms, too many fingers,
+watermark, logo, text, letters, signature, username, words, blurry,
+cropped, jpeg artifacts, low quality, lowres
+`,
+    width: isAdmin ? 832 : 512,
+    height: isAdmin ? 1216 : 768,
     samples: 1,
-    steps: 30,
+    steps: isAdmin ? 30 : 20,
     cfg_scale: 7,
-    sampler: "Euler a",
-    schedule_type: "Automatic",
-    model_hash: "059934ff58",
-    model: "ponyRealism_V21MainVAE.safetensors [059934ff58]",
+    sampler: isAdmin ? "Euler a" : "DPM++ 2M",
+    schedule_type: isAdmin ? "Automatic" : "Karras",
+    model_hash: isAdmin ? "059934ff58" : "bb7e29def5",
+    model: isAdmin
+      ? "ponyRealism_V21MainVAE.safetensors [059934ff58]"
+      : "rpg_v5.safetensors [bb7e29def5]",
     clip_skip: 2,
   });
 
@@ -38,6 +54,7 @@ export async function getImage(prompt: string | string[]): Promise<string> {
 export const getImageOfEvents = async (
   messages: Message[],
   summary: string,
+  isAdmin: boolean,
   characters?: Character[]
 ) => {
   const curatedMessages = messages
@@ -51,7 +68,9 @@ export const getImageOfEvents = async (
     messages: [
       {
         role: "system",
-        content: process.env.NEXT_PUBLIC_IMAGE_SYSTEM_TEXT,
+        content: isAdmin
+          ? process.env.NEXT_PUBLIC_IMAGE_SYSTEM_TEXT
+          : process.env.NEXT_PUBLIC_IMAGE_SYSTEM_TEXT_PC,
       },
       ...(characters
         ? [
@@ -83,11 +102,15 @@ export const getImageOfEvents = async (
       ...curatedMessages,
       {
         role: "user",
-        content: `For this response, return a list of strings used to create a stable diffusion prompt of the current person in the scene and their action based on the last message in the scene. The will be used to generate an image for the narrative
+        content: `For this response, return a list of strings used to create a stable diffusion prompt of the current person or creature in the scene and their action based on the last message in the scene. The will be used to generate an image for the narrative
 
-return the comma separated string followed by exactly three pipes ||| describe what the character is doing in the scene. be as accurate as possible to what she is wearing and her current action in the context of the story
+return the comma separated string followed by exactly three pipes ||| describe what the character or creature is doing in the scene. be as accurate as possible to what she is wearing and her current action in the context of the story
 example:
-${process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT}
+${
+  isAdmin
+    ? process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT
+    : process.env.NEXT_PUBLIC_IMAGE_EXAMPLE_TEXT_PC
+}
 `,
       },
     ],

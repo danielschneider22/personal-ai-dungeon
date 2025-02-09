@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useAdmin } from "../utils/adminContext";
+import { toast } from "react-toastify";
 
 export function AdminArea() {
   const [password, setPassword] = useState("");
@@ -17,10 +18,10 @@ export function AdminArea() {
     const data = await res.json();
 
     if (data.success) {
-      console.log("SUCCESS");
       toggleAdmin();
+      toast.success("You have entered admin mode");
     } else {
-      console.error("wrong");
+      toast.error("Incorrect password.");
     }
   };
 

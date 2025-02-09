@@ -4,6 +4,7 @@ export interface Message {
   sender: "user" | "assistant";
   image?: string;
   caption?: string;
+  imageDesc?: string;
   summarized?: boolean;
 }
 

@@ -13,8 +13,10 @@ import { auth } from "@/firebase";
 import { uploadBase64Image } from "./utils/firebase_api";
 import { getImage, getImageOfEvents } from "./utils/api";
 import { NUM_SUMMARIZE_MESSAGES } from "@/lib/consts";
+import { useAdmin } from "./utils/adminContext";
 
 const RPGConversation: React.FC = () => {
+  const { isAdmin } = useAdmin();
   const [user, setUser] = useState<User | null>(null);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -22,7 +24,7 @@ const RPGConversation: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [adventureTitle, setAdventureTitle] = useState<string>("");
   const [aiInstructions, setAiInstructions] = useState<string>(
-    process.env.NEXT_PUBLIC_STORY_PROMPT!
+    process.env.NEXT_PUBLIC_STORY_PROMPT_PC!
   );
   const [plotEssentials, setPlotEssentials] = useState<string>("");
   const [adventures] = useState<string[]>([
@@ -34,7 +36,7 @@ const RPGConversation: React.FC = () => {
   const [showImages, setShowImages] = useState<boolean>(false);
   const [summary, setSummary] = useState("");
   const [summarizePrompt, setSummarizePrompt] = useState(
-    process.env.NEXT_PUBLIC_SUMMARIZE_PROMPT
+    process.env.NEXT_PUBLIC_SUMMARIZE_PROMPT_PC
   );
   const [adventureId, setAdventureId] = useState<string | null>(null);
 
@@ -61,22 +63,36 @@ const RPGConversation: React.FC = () => {
       !isLoading
     ) {
       async function makeImage() {
-        const id = messages.slice(-1)[0].id;
-        const aiReply = await getImageOfEvents(messages, summary, characters);
-        const imgStr = await getImage(aiReply.split("|||")[0]);
+        const currMessage = messages.slice(-1)[0];
+        let caption = currMessage.caption;
+        let imgDesc = currMessage.imageDesc;
+        if (!caption || !imgDesc) {
+          const aiReply = await getImageOfEvents(
+            messages,
+            summary,
+            isAdmin,
+            characters
+          );
+          imgDesc = aiReply.split("|||")[0];
+          caption = aiReply.split("|||")[1];
+        }
+        const imgStr = await getImage(imgDesc!, isAdmin);
         const imgUrl = await uploadBase64Image(
           imgStr,
           "image/png",
           `messages`,
-          String(id),
+          String(currMessage.id),
           adventureId!
         );
 
         setMessages((prev) => {
-          const msgToAddImg = prev.find((message) => message.id === id);
+          const msgToAddImg = prev.find(
+            (message) => message.id === currMessage.id
+          );
           if (msgToAddImg) {
             msgToAddImg.image = imgUrl;
-            msgToAddImg.caption = aiReply.split("|||")[1];
+            msgToAddImg.caption = caption;
+            msgToAddImg.imageDesc = imgDesc;
           }
           return [...prev];
         });
@@ -152,7 +168,7 @@ const RPGConversation: React.FC = () => {
               },
             ]
           : []),
-        ...(characters
+        ...(characters.length
           ? [
               {
                 role: "system",
@@ -305,8 +321,6 @@ const RPGConversation: React.FC = () => {
     setShowImages(!showImages);
   };
 
-  console.log(messages);
-
   return (
     <>
       {user && (
@@ -328,7 +342,9 @@ const RPGConversation: React.FC = () => {
               variant="ghost"
               size="icon"
               onClick={toggleSettings}
-              className="rounded-full p-1 hover:bg-gray-700"
+              className={`rounded-full p-1 hover:bg-gray-700 ${
+                isAdmin ? "text-green-500" : "text-white"
+              }`}
             >
               <Settings className="h-6 w-6" />
             </Button>
@@ -349,6 +365,7 @@ const RPGConversation: React.FC = () => {
             messages={messages}
           />
           <SettingsPanel
+            showImages={showImages}
             isSettingsOpen={isSettingsOpen}
             toggleSettings={toggleSettings}
             adventureTitle={adventureTitle}
