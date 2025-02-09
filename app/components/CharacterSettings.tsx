@@ -117,6 +117,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         },
       ],
     };
+    let aiReply = "";
     try {
       setIsLoading(true);
       const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
@@ -128,7 +129,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         body: JSON.stringify(json),
       });
       const data = await res.json();
-      const aiReply = data.choices[0].message.content;
+      aiReply = data.choices[0].message.content;
 
       let newCharacters: Character[] = eval(
         aiReply.replaceAll("json", "").replaceAll("`", "")
@@ -150,8 +151,53 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setCharacters(newCharacters);
       toast.success("Characters regenerated!");
     } catch (error) {
-      toast.error("Characters didn't properly regenerate, try again!");
-      console.error(error);
+      console.log(error);
+      try {
+        const brokenJson = {
+          model: "mistral-large-latest",
+          messages: [
+            {
+              role: "user",
+              content: `Running eval() on the following string produced an error. Likely there is something wrong with the array code. Please fix it and send it back. Only send the fixed json array and nothing else. Broken Array:
+                ${aiReply.replaceAll("json", "").replaceAll("`", "")}
+                `,
+            },
+          ],
+        };
+        const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_MISTRAL_API_TOKEN}`,
+          },
+          body: JSON.stringify(brokenJson),
+        });
+        const data = await res.json();
+        const aiReply2 = data.choices[0].message.content;
+
+        let newCharacters: Character[] = eval(
+          aiReply2.replaceAll("json", "").replaceAll("`", "")
+        );
+
+        if (makeImages) {
+          updateCharacterImages(newCharacters);
+        } else {
+          newCharacters = newCharacters.map((character) => {
+            const oldCharacter = characters.find(
+              (c) => c.name === character.name
+            );
+            return {
+              ...character,
+              image: oldCharacter ? oldCharacter.image : "",
+            };
+          });
+        }
+        setCharacters(newCharacters);
+        toast.success("Characters regenerated!");
+      } catch (error) {
+        toast.error("Characters didn't properly regenerate, try again!");
+        console.error(error);
+      }
     } finally {
       setIsLoading(false);
     }
