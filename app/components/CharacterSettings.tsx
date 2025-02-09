@@ -245,7 +245,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   return (
     <ScrollArea className="h-full llama relative">
-      <div className="flex justify-center w-full">
+      <div className="flex flex-col justify-center w-full">
         <Button
           onClick={() => handleGenerateCharacters(showImages)}
           variant="outline"
