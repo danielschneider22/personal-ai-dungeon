@@ -288,8 +288,7 @@ export const GeneralContent: React.FC<SettingsPanelProps> = ({
       <select
         value={adventureId || ""}
         onChange={(e) => setActiveAdventure(e.target.value)}
-        className="mb-4 bg-gray-700 text-gray-100 rounded-md p-2 w-full"
-        style={{ marginLeft: 2, marginRight: 2 }}
+        className="m-0 mb-4 bg-gray-700 text-gray-100 rounded-md w-full"
         disabled={disabledFields}
       >
         {adventureList &&
