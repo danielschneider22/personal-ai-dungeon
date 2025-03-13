@@ -30,6 +30,7 @@ export interface Adventure {
   aiInstructions: string;
   summary: string;
   summarizePrompt: string;
+  summaryList: string[];
   characters: Character[];
   id?: string;
 }

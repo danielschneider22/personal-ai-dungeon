@@ -10,6 +10,7 @@ import {
   getAdventures,
   saveAdventure,
   deleteAdventure,
+  updateSummarizeList,
 } from "../utils/firebase_api";
 import { User } from "firebase/auth";
 import { useEffect, useMemo, useState } from "react";
@@ -17,6 +18,7 @@ import { Expand } from "lucide-react";
 import { NUM_SUMMARIZE_MESSAGES } from "@/lib/consts";
 import { AdminArea } from "./AdminArea";
 import { useAdmin } from "../utils/adminContext";
+import { Summaries } from "./Summaries";
 
 interface SettingsPanelProps {
   isSettingsOpen: boolean;
@@ -41,6 +43,8 @@ interface SettingsPanelProps {
   summarizePrompt: string;
   setSummarizePrompt: any;
   showImages: boolean;
+  summaryList: string[];
+  setSummaryList: any;
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -50,6 +54,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   aiInstructions,
   setAiInstructions,
   summary,
+  summaryList,
+  setSummaryList,
   setSummary,
   plotEssentials,
   setPlotEssentials,
@@ -73,6 +79,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       plotEssentials,
       aiInstructions,
       summary,
+      summaryList,
       title: adventureTitle,
       characters: characters,
       summarizePrompt,
@@ -84,6 +91,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     characters,
     plotEssentials,
     messages,
+    summaryList,
   ]);
 
   const emptyAdventure: Adventure = {
@@ -94,6 +102,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       ? process.env.NEXT_PUBLIC_STORY_PROMPT!
       : process.env.NEXT_PUBLIC_STORY_PROMPT_PC!,
     summary: "",
+    summaryList: [],
     characters: [],
     summarizePrompt: isAdmin
       ? process.env.NEXT_PUBLIC_SUMMARIZE_PROMPT!
@@ -155,6 +164,14 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       const aiReply = data.choices[0].message.content;
 
       setSummary(aiReply);
+
+      await updateSummarizeList(
+        adventureId!,
+        user!.uid,
+        summaryList || [],
+        aiReply
+      );
+      setSummaryList([...(summaryList || []), aiReply]);
     } catch (error) {
       console.error(error);
     }
@@ -197,6 +214,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setAdventureTitle(objAdventure.title);
       setAiInstructions(objAdventure.aiInstructions);
       setSummary(objAdventure.summary);
+      setSummaryList(objAdventure.summaryList);
       setSummarizePrompt(
         objAdventure.summarizePrompt ||
           (isAdmin
@@ -233,6 +251,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="characters">Characters</TabsTrigger>
               <TabsTrigger value="admin">Admin</TabsTrigger>
+              <TabsTrigger value="summaries">Summaries</TabsTrigger>
             </TabsList>
           </div>
           <TabsContent
@@ -399,6 +418,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             className="flex-grow flex flex-col overflow-visible"
           >
             <AdminArea />
+          </TabsContent>
+          <TabsContent
+            value="summaries"
+            className="flex-grow flex flex-col overflow-visible"
+          >
+            <Summaries summaryList={summaryList} />
           </TabsContent>
         </Tabs>
       </div>

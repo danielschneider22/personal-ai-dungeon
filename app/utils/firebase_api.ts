@@ -18,6 +18,28 @@ import {
 import { getAuth } from "firebase/auth";
 import { debounce } from "lodash";
 
+export const updateSummarizeList = async (
+  adventureId: string,
+  userId: string,
+  summaryList: string[] = [],
+  summary: string
+): Promise<boolean> => {
+  try {
+    const adventureRef = doc(db, "users", userId, "adventures", adventureId); // Use existing document ID
+    await setDoc(
+      adventureRef,
+      {
+        summaryList: [...summaryList, summary],
+      },
+      { merge: true }
+    ); // Merge updates with existing fields
+    return true;
+  } catch (error) {
+    console.error("Error saving summary list:", error);
+    return false;
+  }
+};
+
 export const saveAdventureCall = async (
   adventureId: string,
   userId: string,

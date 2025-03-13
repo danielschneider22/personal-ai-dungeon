@@ -10,7 +10,7 @@ import { Character, Message } from "./components/types";
 import { onAuthStateChanged, User } from "firebase/auth";
 import SignIn from "./components/SignIn";
 import { auth } from "@/firebase";
-import { uploadBase64Image } from "./utils/firebase_api";
+import { updateSummarizeList, uploadBase64Image } from "./utils/firebase_api";
 import { getImage, getImageOfEvents } from "./utils/api";
 import { NUM_SUMMARIZE_MESSAGES } from "@/lib/consts";
 import { useAdmin } from "./utils/adminContext";
@@ -35,6 +35,7 @@ const RPGConversation: React.FC = () => {
   const [isInputVisible, setIsInputVisible] = useState<boolean>(false);
   const [showImages, setShowImages] = useState<boolean>(false);
   const [summary, setSummary] = useState("");
+  const [summaryList, setSummaryList] = useState<string[]>([]);
   const [summarizePrompt, setSummarizePrompt] = useState(
     process.env.NEXT_PUBLIC_SUMMARIZE_PROMPT_PC
   );
@@ -280,6 +281,13 @@ const RPGConversation: React.FC = () => {
         });
       });
       setSummary(aiReply);
+      await updateSummarizeList(
+        adventureId!,
+        user!.uid,
+        summaryList || [],
+        aiReply
+      );
+      setSummaryList([...(summaryList || []), aiReply]);
     } catch (error) {
       console.error(error);
     } finally {
@@ -387,6 +395,8 @@ const RPGConversation: React.FC = () => {
             setAdventureId={setAdventureId}
             summarizePrompt={summarizePrompt!}
             setSummarizePrompt={setSummarizePrompt}
+            summaryList={summaryList}
+            setSummaryList={setSummaryList}
           />
         </div>
       )}
