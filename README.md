@@ -38,7 +38,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 How to run images:
 
 stable-diffusion-webui
-run webui
+run webui-user
 
 Cloudflared tunnel:
 cloudflared tunnel --url http://127.0.0.1:7860
