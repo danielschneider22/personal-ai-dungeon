@@ -222,7 +222,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 bg-gray-900/95 transition-transform duration-300 ease-in-out h-screen ${
+      className={`fixed inset-0 bg-gray-900/95 transition-transform duration-300 ease-in-out h-screen overflow-scroll ${
         isSettingsOpen ? "translate-y-0" : "translate-y-full"
       }`}
     >
