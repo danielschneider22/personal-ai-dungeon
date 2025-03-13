@@ -301,7 +301,7 @@ export const GeneralContent: React.FC<SettingsPanelProps> = ({
             </option>
           ))}
       </select>
-      <div className="flex flex-wrap w-full justify-center mb-14">
+      <div className="flex flex-wrap w-full justify-center mb-40">
         <Button
           onClick={doCreateAdventure}
           className="bg-green-600 text-white font-semibold px-4 py-2 rounded-md shadow-md 
