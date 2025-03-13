@@ -35,5 +35,10 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+How to run images:
+
+stable-diffusion-webui
+run webui
+
 Cloudflared tunnel:
 cloudflared tunnel --url http://127.0.0.1:7860
