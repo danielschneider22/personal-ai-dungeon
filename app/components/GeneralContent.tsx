@@ -14,7 +14,6 @@ import { useAdmin } from "../utils/adminContext";
 import { Button } from "@/components/ui/button";
 import { Expand } from "lucide-react";
 import SignOut from "./SignOut";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SettingsPanelProps {
   adventureTitle: string;
@@ -190,7 +189,7 @@ export const GeneralContent: React.FC<SettingsPanelProps> = ({
   }
 
   return (
-    <ScrollArea className="relative">
+    <div className="relative w-full">
       <Input
         type="text"
         placeholder="Adventure Title"
@@ -332,6 +331,6 @@ export const GeneralContent: React.FC<SettingsPanelProps> = ({
           Delete
         </Button>
       </div>
-    </ScrollArea>
+    </div>
   );
 };
